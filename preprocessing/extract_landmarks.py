@@ -6,8 +6,9 @@ import json
 import csv
 import numpy as np
 
-json_path = "../annotations/train/dislike.json"
-csv_path = "./model/keypoint_classifier/keypoint.csv"
+# note that 'peace', 'two_up' and 'stop' have inverse datasets, and need to be dealt with in merge_data.py instead
+json_path = "../annotations/train/call.json"
+csv_path = "../model_data/training_data.csv"
 
 # for reference. 'N/A' and 'no_gesture' should not be encountered.
 class_id_map = {"fist": 0, "like": 1, "dislike": 2, "one": 3, "middle_finger": 4, "little_finger": 5, "thumb_index": 6,
@@ -43,7 +44,7 @@ with open(csv_path, "a", newline="") as f:
             if entry["labels"][0] != "no_gesture":
                 label = entry["labels"][0]
             else:
-                label = entry["labels"][1]
+                label = entry["labels"][1] if len(entry["labels"]) > 1 else "N/A"
                 index = 1
         else:
             label = "N/A"
