@@ -27,17 +27,25 @@ csv_path = "../model_data/training_data.csv"
 write_json(path1, temp_path1, True)
 write_json(path2, temp_path2, True)
 
-# load and merge N//2 samples from each class
+# load each file
 normal = pd.read_csv(temp_path1)
 inverted = pd.read_csv(temp_path2)
 
+# rename headers of both files
+header = ["label"] + [f'{i}' for i in range(42)]
+normal.columns = header
+inverted.columns = header
+
+# sample N//2 samples from each class
 normal_samples = normal.sample(n=half, random_state=SEED)
 inverted_samples = inverted.sample(n=half, random_state=SEED)
 
-#merged_samples = pd.concat([normal_samples, inverted_samples])
-#merged_samples = merged_samples.sample(frac=1, random_state=SEED).reset_index(drop=True)  # shuffle merged dataset
+merged_samples = pd.concat([normal_samples, inverted_samples])
+print(merged_samples.isna().sum().sum())
+merged_samples = merged_samples.sample(frac=1, random_state=SEED).reset_index(drop=True)  # shuffle merged dataset
+print(merged_samples.isna().sum().sum())
 
 # place merged samples in the target dataset file
-#merged_samples.to_csv(csv_path, mode="a", header=False, index=False)
+merged_samples.to_csv(csv_path, mode="a", header=False, index=False)
 
 print("done")
