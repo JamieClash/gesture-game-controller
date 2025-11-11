@@ -17,10 +17,10 @@ path1 = "../annotations/train/peace.json"
 path2 = "../annotations/train/peace_inverted.json"
 
 # paths for temporary storage of both classes
-temp_path1 = "./preprocessing/temp/class1.csv"
-temp_path2 = "./preprocessing/temp/class2.csv"
+temp_path1 = "../model_data/temp/class1.csv"
+temp_path2 = "../model_data/temp/class2.csv"
 
-# the merged samples will be placed into this dataset.
+# the merged samples will be appended onto this dataset.
 csv_path = "../model_data/training_data.csv"
 
 # for reference. 'N/A' and 'no_gesture' should not be encountered.
@@ -40,10 +40,10 @@ inverted = pd.read_csv(temp_path2)
 normal_samples = normal.sample(n=half, random_state=SEED)
 inverted_samples = inverted.sample(n=half, random_state=SEED)
 
-merged_samples = pd.concat([normal_samples, inverted_samples])
-merged_samples = merged_samples.sample(frac=1, random_state=SEED).reset_index(drop=True)  # shuffle merged dataset
+#merged_samples = pd.concat([normal_samples, inverted_samples])
+#merged_samples = merged_samples.sample(frac=1, random_state=SEED).reset_index(drop=True)  # shuffle merged dataset
 
 # place merged samples in the target dataset file
-merged_samples.to_csv(csv_path, mode="a", header=False, index=False)
+#merged_samples.to_csv(csv_path, mode="a", header=False, index=False)
 
 print("done")
