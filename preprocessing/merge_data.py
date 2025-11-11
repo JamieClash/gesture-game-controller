@@ -23,12 +23,6 @@ temp_path2 = "../model_data/temp/class2.csv"
 # the merged samples will be appended onto this dataset.
 csv_path = "../model_data/training_data.csv"
 
-# for reference. 'N/A' and 'no_gesture' should not be encountered.
-class_id_map = {"fist": 0, "like": 1, "dislike": 2, "one": 3, "middle_finger": 4, "little_finger": 5, "thumb_index": 6,
-                "call": 7, "peace": 8, "two_up": 9, "rock": 10, "three_gun": 11, "three2": 12, "three": 13, "three3": 14,
-                "ok": 15, "four": 16, "palm": 17, "grip": 18, "stop": 19, "grabbing": 20, "N/A": 21, "no_gesture": 22,
-                "peace_inverted": 8, "two_up_inverted": 9, "stop_inverted": 19}
-
 # write both classes into separate files (overwrite pre-existing file)
 write_json(path1, temp_path1, True)
 write_json(path2, temp_path2, True)

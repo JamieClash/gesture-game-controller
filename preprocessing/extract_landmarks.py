@@ -6,10 +6,6 @@ import json
 import csv
 import numpy as np
 
-# note that 'peace', 'two_up' and 'stop' have inverse datasets, and need to be dealt with in merge_data.py instead
-json_path = "../annotations/train/call.json"
-csv_path = "../model_data/training_data.csv"
-
 # for reference. 'N/A' and 'no_gesture' should not be encountered.
 class_id_map = {"fist": 0, "like": 1, "dislike": 2, "one": 3, "middle_finger": 4, "little_finger": 5, "thumb_index": 6,
                 "call": 7, "peace": 8, "two_up": 9, "rock": 10, "three_gun": 11, "three2": 12, "three": 13, "three3": 14,
@@ -71,6 +67,3 @@ def write_json(json_path, csv_path, write=False):
             
             # [class_id, x1, y1, ..., x21, y21]
             writer.writerow([id] + processed_landmarks)
-
-write_json(json_path, csv_path)
-print("done")
