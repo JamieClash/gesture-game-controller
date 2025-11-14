@@ -3,8 +3,8 @@
 from extract_landmarks import write_json
 
 # note that 'peace', 'two_up' and 'stop' have inverse datasets, and need to be dealt with in merge_data.py instead
-json_path = "../annotations/train/call.json"
-csv_path = "../model_data/training_data.csv"
+json_path = "../annotations/val/grabbing.json"
+csv_path = "../model_data/validation_data.csv"
 
 write_json(json_path, csv_path)
 print("done")
