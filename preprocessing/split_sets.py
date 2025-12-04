@@ -13,7 +13,7 @@ test_path = "../model_data/testing_data.csv"
 val_path = "../model_data/validation_data.csv"
 
 df = pd.read_csv(src_path)
-df.iloc[:, 0] = 22  # replace labels with no_gesture's numeric label
+df.iloc[:, 0] = 21  # replace labels with no_gesture's numeric label
 
 # sample into separate sets, and store them in the correponding paths.
 train_df, temp_df = train_test_split(df, test_size=0.25, random_state=SEED)  # 0.75 - training set
