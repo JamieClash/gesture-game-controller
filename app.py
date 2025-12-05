@@ -192,6 +192,9 @@ def main():
 
 
 def select_mode(key, mode):
+    # disabled for the gesture controller
+    return -1, 0
+
     number = -1
     if 48 <= key <= 57:  # 0 ~ 9
         number = key - 48
