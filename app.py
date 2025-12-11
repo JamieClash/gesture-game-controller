@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import csv
+import json
 import copy
 import argparse
 import itertools
@@ -10,6 +11,7 @@ from collections import deque
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
+import pydirectinput
 
 from utils import CvFpsCalc
 from model import KeyPointClassifier
@@ -17,6 +19,24 @@ from model import PointHistoryClassifier
 
 MAX_NUM_HANDS = 2
 DISABLE_POINT_HISTORY = True
+
+MIN_DETECTION_CONFIDENCE = 0.7
+MIN_TRACKING_CONFIDENCE = 0.5
+
+profile_folder = "profiles/custom_profiles/"
+default_profile_path = profile_folder + "default.json"
+
+# used to retrieve previously used gesture-key mapping profile
+prev_profile_path = "profiles/prev.txt"
+
+# paths for gesture labels and keypoint path (latter is disabled)
+keypoint_label_path = "model/keypoint_classifier/keypoint_classifier_label.csv"
+keypoint_path = "model/keypoint_classifier/keypoint.csv"
+
+# note that the point history model provided by the sample program 
+# is NOT used by the gesture game controller
+point_label_path = "model/point_history_classifier/point_history_classifier_label.csv"
+point_path = "model/point_history_classifier/point_history.csv"
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -29,15 +49,25 @@ def get_args():
     parser.add_argument("--min_detection_confidence",
                         help='min_detection_confidence',
                         type=float,
-                        default=0.7)
+                        default=MIN_DETECTION_CONFIDENCE)
     parser.add_argument("--min_tracking_confidence",
                         help='min_tracking_confidence',
                         type=int,
-                        default=0.5)
+                        default=MIN_TRACKING_CONFIDENCE)
 
     args = parser.parse_args()
 
     return args
+
+def get_prev_path():
+    with open(prev_profile_path, "r") as f:
+        path = f.readline()
+    return path
+
+def get_mappingDict(profile_path):
+    with open(profile_path, "r") as f:
+        data = json.load(f)
+    return data
 
 
 def main():
@@ -53,6 +83,11 @@ def main():
     min_tracking_confidence = args.min_tracking_confidence
 
     use_brect = True
+
+    # set up gesture mapping
+    prev_path = get_prev_path()
+    mappingDict = get_mappingDict(prev_path)
+    profile_name = mappingDict["profile_name"]
 
     # Camera preparation ###############################################################
     cap = cv.VideoCapture(cap_device)
@@ -73,16 +108,13 @@ def main():
     point_history_classifier = PointHistoryClassifier()
 
     # Read labels ###########################################################
-    with open('model/keypoint_classifier/keypoint_classifier_label.csv',
-              encoding='utf-8-sig') as f:
+    with open(keypoint_label_path, encoding='utf-8-sig') as f:
         keypoint_classifier_labels = csv.reader(f)
         keypoint_classifier_labels = [
             row[0] for row in keypoint_classifier_labels
         ]
     if not DISABLE_POINT_HISTORY:
-        with open(
-                'model/point_history_classifier/point_history_classifier_label.csv',
-                encoding='utf-8-sig') as f:
+        with open(point_label_path, encoding='utf-8-sig') as f:
             point_history_classifier_labels = csv.reader(f)
             point_history_classifier_labels = [
                 row[0] for row in point_history_classifier_labels
@@ -182,7 +214,7 @@ def main():
             point_history.append([0, 0])
 
         debug_image = draw_point_history(debug_image, point_history)
-        debug_image = draw_info(debug_image, fps, mode, number)
+        debug_image = draw_info(debug_image, fps, mode, number, profile_name)
 
         # Screen reflection #############################################################
         cv.imshow('Hand Gesture Recognition', debug_image)
@@ -192,9 +224,9 @@ def main():
 
 
 def select_mode(key, mode):
-    # disabled for the gesture controller
     return -1, 0
 
+    # disabled for the gesture controller
     number = -1
     if 48 <= key <= 57:  # 0 ~ 9
         number = key - 48
@@ -295,16 +327,14 @@ def pre_process_point_history(image, point_history):
 
 
 def logging_csv(number, mode, landmark_list, point_history_list):
-    if mode == 0:
+    if mode == 0 or mode == 3:
         pass
     if mode == 1 and (0 <= number <= 9):
-        csv_path = 'model/keypoint_classifier/keypoint.csv'
-        with open(csv_path, 'a', newline="") as f:
+        with open(keypoint_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *landmark_list])
     if mode == 2 and (0 <= number <= 9):
-        csv_path = 'model/point_history_classifier/point_history.csv'
-        with open(csv_path, 'a', newline="") as f:
+        with open(point_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *point_history_list])
     return
@@ -537,13 +567,16 @@ def draw_point_history(image, point_history):
     return image
 
 
-def draw_info(image, fps, mode, number):
+def draw_info(image, fps, mode, number, profile_name=None):
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (0, 0, 0), 4, cv.LINE_AA)
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (255, 255, 255), 2, cv.LINE_AA)
 
     mode_string = ['Logging Key Point', 'Logging Point History']
+    cv.putText(image, "Current profile: " + profile_name, (10, 90),
+                cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
+                cv.LINE_AA)
     if 1 <= mode <= 2:
         cv.putText(image, "MODE:" + mode_string[mode - 1], (10, 90),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
