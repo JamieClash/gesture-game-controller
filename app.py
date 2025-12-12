@@ -12,6 +12,8 @@ import cv2 as cv
 import numpy as np
 import mediapipe as mp
 import pydirectinput
+import os
+import subprocess
 
 from utils import CvFpsCalc
 from model import KeyPointClassifier
@@ -28,6 +30,12 @@ default_profile_path = profile_folder + "default.json"
 
 # used to retrieve previously used gesture-key mapping profile
 prev_profile_path = "profiles/prev.txt"
+
+# used for selecting profiles
+profile_selector_path = "GUIs/profile_selector_GUI.py"
+
+# used to keep track of whether profile selection UI is open
+current_process = None 
 
 # paths for gesture labels and keypoint path (latter is disabled)
 keypoint_label_path = "model/keypoint_classifier/keypoint_classifier_label.csv"
@@ -64,10 +72,37 @@ def get_prev_path():
         path = f.readline()
     return path
 
+def set_prev_path(profile_path):
+    with open(prev_profile_path, "w") as f:
+        f.write(profile_path)
+
 def get_mappingDict(profile_path):
     with open(profile_path, "r") as f:
         data = json.load(f)
     return data
+
+def open_profile_selector():
+    global current_process
+
+    # selector already open.
+    if current_process is not None and current_process.poll() is None:
+        return
+
+    current_process = subprocess.Popen(["python", profile_selector_path], stdout=subprocess.PIPE, text=True)
+
+def check_selection():
+    global current_process
+
+    if current_process is None:
+        return None
+
+    if current_process.poll() is not None:
+        path = current_process.stdout.read().strip()
+        current_process = None
+        if os.path.isfile(path):
+            return path
+    
+    return None
 
 
 def main():
@@ -136,6 +171,14 @@ def main():
 
     while True:
         fps = cvFpsCalc.get()
+
+        # check if a new mapping profile has been selected
+        profile_path = check_selection()
+        if profile_path:
+            print(profile_path)
+            set_prev_path(profile_path)
+            mappingDict = get_mappingDict(profile_path)
+            profile_name = mappingDict["profile_name"]
 
         # Process Key (ESC: end) #################################################
         key = cv.waitKey(10)
@@ -224,6 +267,9 @@ def main():
 
 
 def select_mode(key, mode):
+    if key == 101:  # e
+        open_profile_selector()
+
     return -1, 0
 
     # disabled for the gesture controller

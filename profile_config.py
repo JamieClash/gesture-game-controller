@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, simpledialog, messagebox
 import json
 import os
-from mapping_GUI import open_gui
+from GUIs.mapping_GUI import open_gui
 
 profile_dir = "./profiles/custom_profiles/"
      

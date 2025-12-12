@@ -5,7 +5,7 @@
         "left": {
             "0": {
                 "name": "left_fist",
-                "enable": 0,
+                "enable": 1,
                 "hand_state": [
                     0,
                     0,
@@ -13,20 +13,20 @@
                     0,
                     0
                 ],
-                "action": "key",
+                "action": "mouse_move",
                 "key": ".",
-                "mode": "hold",
+                "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "u",
-                "retrigger_mode": "hold",
-                "retrigger_cooldown_ms": 200,
-                "use_finger_transitions": 1,
-                "cursor_mode": 2,
-                "cursor_sensitivity": 1.9
+                "retrigger_key": "space",
+                "retrigger_mode": "tap",
+                "retrigger_cooldown_ms": 100,
+                "use_finger_transitions": 0,
+                "cursor_mode": 3,
+                "cursor_sensitivity": 1.0
             },
             "1": {
                 "name": "left_like",
-                "enable": 0,
+                "enable": 1,
                 "hand_state": [
                     1,
                     0,
@@ -42,12 +42,12 @@
                 "retrigger_mode": "hold",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 3,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "2": {
                 "name": "left_dislike",
-                "enable": 0,
+                "enable": 1,
                 "hand_state": [
                     1,
                     0,
@@ -77,7 +77,7 @@
                     0
                 ],
                 "action": "key",
-                "key": "8",
+                "key": "1",
                 "mode": "tap",
                 "retrigger_action": "key",
                 "retrigger_key": "1",
@@ -168,7 +168,7 @@
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 1,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "8": {
@@ -232,7 +232,7 @@
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
                 "cursor_mode": 0,
-                "cursor_sensitivity": 3.1
+                "cursor_sensitivity": 1.0
             },
             "11": {
                 "name": "left_three_gun",
@@ -292,10 +292,10 @@
                 "retrigger_action": "key",
                 "retrigger_key": "3",
                 "retrigger_mode": "tap",
-                "retrigger_cooldown_ms": 1000,
+                "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
                 "cursor_mode": 0,
-                "cursor_sensitivity": 2.0
+                "cursor_sensitivity": 1.0
             },
             "14": {
                 "name": "left_three3",
@@ -336,7 +336,7 @@
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 1,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "16": {
@@ -353,11 +353,11 @@
                 "key": "4",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "5",
+                "retrigger_key": "4",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 1,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "17": {
@@ -399,7 +399,7 @@
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 2,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "19": {
@@ -416,7 +416,7 @@
                 "key": ".",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": ",",
+                "retrigger_key": ".",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -458,7 +458,7 @@
                 "key": ".",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "1",
+                "retrigger_key": ".",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -477,11 +477,11 @@
                     0,
                     0
                 ],
-                "action": "mouse_move",
+                "action": "key",
                 "key": ".",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "-",
+                "retrigger_key": ".",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -490,7 +490,7 @@
             },
             "1": {
                 "name": "right_like",
-                "enable": 0,
+                "enable": 1,
                 "hand_state": [
                     1,
                     0,
@@ -499,7 +499,7 @@
                     0
                 ],
                 "action": "key",
-                "key": "u",
+                "key": "space",
                 "mode": "hold",
                 "retrigger_action": "key",
                 "retrigger_key": "space",
@@ -520,10 +520,10 @@
                     0
                 ],
                 "action": "key",
-                "key": "ctrlleft",
+                "key": "capslock",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "ctrlleft",
+                "retrigger_key": "capslock",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -565,11 +565,11 @@
                 "key": "x",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "y",
+                "retrigger_key": "x",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 1,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "5": {
@@ -586,7 +586,7 @@
                 "key": "tab",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "t",
+                "retrigger_key": "tab",
                 "retrigger_mode": "hold",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -624,8 +624,8 @@
                     0,
                     1
                 ],
-                "action": "none",
-                "key": "up",
+                "action": "key",
+                "key": "v",
                 "mode": "tap",
                 "retrigger_action": "key",
                 "retrigger_key": "v",
@@ -646,8 +646,8 @@
                     0
                 ],
                 "action": "mouse_click",
-                "key": "right_click",
-                "mode": "hold",
+                "key": "left_click",
+                "mode": "tap",
                 "retrigger_action": "mouse_click",
                 "retrigger_key": "left_click",
                 "retrigger_mode": "tap",
@@ -667,14 +667,14 @@
                     0
                 ],
                 "action": "mouse_click",
-                "key": "left_click",
+                "key": "double_click",
                 "mode": "tap",
                 "retrigger_action": "mouse_click",
-                "retrigger_key": "triple_click",
+                "retrigger_key": "double_click",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 1,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "10": {
@@ -709,14 +709,14 @@
                     0
                 ],
                 "action": "key",
-                "key": "v",
+                "key": "r",
                 "mode": "tap",
                 "retrigger_action": "key",
                 "retrigger_key": "r",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 2,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "12": {
@@ -733,7 +733,7 @@
                 "key": "f",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "escape",
+                "retrigger_key": "f",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -817,11 +817,11 @@
                 "key": "c",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "capslock",
+                "retrigger_key": "c",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 1,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "17": {
@@ -838,7 +838,7 @@
                 "key": ".",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "-",
+                "retrigger_key": ".",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -857,13 +857,13 @@
                 ],
                 "action": "key",
                 "key": "m",
-                "mode": "hold",
+                "mode": "tap",
                 "retrigger_action": "key",
                 "retrigger_key": "m",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 1,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "19": {
@@ -880,7 +880,7 @@
                 "key": "t",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "subtract",
+                "retrigger_key": "t",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -897,8 +897,8 @@
                     1,
                     1
                 ],
-                "action": "mouse_move",
-                "key": "j",
+                "action": "key",
+                "key": "i",
                 "mode": "tap",
                 "retrigger_action": "key",
                 "retrigger_key": "i",
@@ -919,7 +919,7 @@
                     0
                 ],
                 "action": "key",
-                "key": "f10",
+                "key": ".",
                 "mode": "tap",
                 "retrigger_action": "key",
                 "retrigger_key": ".",
@@ -956,7 +956,7 @@
             }
         },
         "right": {
-            "enabled": 1,
+            "enabled": 0,
             "0": {
                 "extend_key": "1",
                 "retract_key": "1"
