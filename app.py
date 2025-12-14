@@ -37,6 +37,10 @@ profile_selector_path = "GUIs/profile_selector_GUI.py"
 # used to keep track of whether profile selection UI is open
 current_process = None 
 
+# used for querying the profile dictionary when having indices instead of strings
+hand_labels = ["left", "right"]
+bad_keys = ["NULL", "left_click", "right_click", "middle_click", "double_click", "triple_click"]
+
 # paths for gesture labels and keypoint path (latter is disabled)
 keypoint_label_path = "model/keypoint_classifier/keypoint_classifier_label.csv"
 keypoint_path = "model/keypoint_classifier/keypoint.csv"
@@ -121,8 +125,8 @@ def main():
 
     # set up gesture mapping
     prev_path = get_prev_path()
-    mappingDict = get_mappingDict(prev_path)
-    profile_name = mappingDict["profile_name"]
+    profile = get_mappingDict(prev_path)
+    profile_name = profile["profile_name"]
 
     # Camera preparation ###############################################################
     cap = cv.VideoCapture(cap_device)
@@ -169,6 +173,27 @@ def main():
     #  ########################################################################
     mode = 0
 
+    #  ##################################################################
+    # information we keep track of for the game controller
+
+    # [left_gesture_index, right_gesture_index] --> Access gesture settings via profile["gestures"]["left" || "right"][gesture_index]
+    # used for transition functions and releasing held keys
+    prev_gestures = [None, None]
+
+    # previous gesture bounding box area. If increased in size beyond threshold, 'retrigger' a gesture's mapped action.
+    prev_bb_area = [None, None]
+    retrigger_threshold = 1.5 
+
+    # angles used for angle-based cursor movement. Angle between wrist (0) and second joint of middle finger (11)
+    prev_angles = [None, None]
+
+    # 'starting' index finger tip position (8) stored as an 'origin' for absolute cursor movement. 
+    prev_absolute_origins = [None, None]
+
+    # 'starting' wrist position (0) stored as an 'origin' for panning cursor movement.
+    prev_panning_origins = [None, None]
+    panning_threshold = 0.1  # threshold for triggering cursor panning
+
     while True:
         fps = cvFpsCalc.get()
 
@@ -177,8 +202,101 @@ def main():
         if profile_path:
             print(profile_path)
             set_prev_path(profile_path)
-            mappingDict = get_mappingDict(profile_path)
-            profile_name = mappingDict["profile_name"]
+            profile = get_mappingDict(profile_path)
+            profile_name = profile["profile_name"]
+        
+        # functions for the game controller
+        def apply_action(curr_gesture, retrigger=False):
+            # not applicable if gesture supports transition function
+            if curr_gesture["use_finger_transitions"] or not curr_gesture["enable"]:
+                return
+            
+            def apply_click(click):
+                if click == "left_click":
+                    pydirectinput.leftClick()
+                elif click == "right_click":
+                    pydirectinput.rightClick()
+                elif click == "middle_click":
+                    pydirectinput.middleClick()
+                elif click == "double_click":
+                    pydirectinput.doubleClick()
+                elif click == "triple_click":
+                    pydirectinput.tripleClick()
+            
+            # apply action if applicable
+            if retrigger:
+                if curr_gesture["retrigger_action"] == "mouse_click":
+                    apply_click(curr_gesture["retrigger_key"])
+                elif curr_gesture["retrigger_key"] not in bad_keys:
+                    if curr_gesture["retrigger_mode"] == "hold":
+                        pydirectinput.keyDown(curr_gesture["retrigger_key"])
+                    else:
+                        pydirectinput.press(curr_gesture["retrigger_key"])
+            else:
+                if curr_gesture["action"] == "mouse_click":
+                    apply_click(curr_gesture["key"])
+                elif curr_gesture["key"] not in bad_keys:
+                    if curr_gesture["mode"] == "hold":
+                        pydirectinput.keyDown(curr_gesture["key"])
+                    else:
+                        pydirectinput.press(curr_gesture["key"])
+
+        def end_action(prev_gesture, retrigger=False):
+            # not applicable if gesture supports transition function
+            if prev_gesture["use_finger_transitions"] or not prev_gesture["enable"]:
+                return
+            
+            # release key if applicable
+            if (retrigger and prev_gesture["retrigger_action"] != "mouse_click" and prev_gesture["retrigger_mode"] == "hold" 
+                and prev_gesture["retrigger_key"] not in bad_keys):
+                pydirectinput.keyUp(prev_gesture["retrigger_key"])
+            elif (not retrigger and prev_gesture["action"] != "mouse_click" and prev_gesture["mode"] == "hold" 
+                and prev_gesture["key"] not in bad_keys):
+                pydirectinput.keyUp(prev_gesture["key"])
+
+        def apply_transition_function(handedness, prev_gesture, curr_gesture):
+            transition_profile = profile["transition_functions"][hand_labels[handedness]]
+
+            if not transition_profile["enabled"]:
+                return
+
+            prev_support = prev_gesture["use_finger_transitions"] and prev_gesture["enabled"]
+            curr_support = curr_gesture["use_finger_transitions"] and curr_gesture["enabled"]
+
+            if (not prev_support) and (not curr_support):
+                return
+
+            prev_state = prev_gesture["hand_state"]
+            curr_state = curr_gesture["hand_state"]
+
+            extend_key = transition_profile[str(i)]["extend_key"]
+            retract_key = transition_profile[str(i)]["retract_key"]
+
+            def press_key(key):
+                if key != "NULL":
+                    pydirectinput.press(key)
+
+            if prev_support and curr_support:
+                # transform from prev_state to curr_state with transition keys
+                for i in range(len(prev_state)):
+                    p_s = prev_state[i]
+                    c_s = curr_state[i]
+
+                    if p_s > c_s:
+                        press_key(retract_key)
+                    elif c_s > p_s:
+                        press_key(extend_key)
+
+            elif prev_support:
+                # reset prev_state to [0,0,0,0,0] with transition keys
+                for i, s in enumerate(prev_state):
+                    if s:
+                        press_key(retract_key)
+            elif curr_support:
+                # set [0,0,0,0,0] to curr_state with transition keys
+                for i, s in enumerate(curr_state):
+                    if s:
+                        press_key(extend_key)
 
         # Process Key (ESC: end) #################################################
         key = cv.waitKey(10)
@@ -221,6 +339,41 @@ def main():
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
 
+                # process information for game controller
+                handedness_index = 0 if handedness.classification[0].label[0:] == "Left" else 1
+
+                hand_profile = profile["gestures"][hand_labels[handedness_index]]
+                curr_gesture = hand_profile[str(hand_sign_id)]
+                
+                # check if gesture for this hand has changed.
+                if prev_gestures[handedness_index] != hand_sign_id:
+                    if prev_gestures[handedness_index] is not None:
+                        prev_gesture = hand_profile[str(prev_gestures[handedness_index])]
+
+                        # apply transition function if applicable
+                        apply_transition_function(handedness_index, prev_gesture, curr_gesture)
+                        
+                        # end previous action if applicable
+                        end_action(prev_gesture)
+
+                    # update everything stored according to gesture
+                    # ...
+                    supports_movement = curr_gesture["action"] == "mouse_move" and curr_gesture["cursor_mode"] != 0
+
+                    # apply current gesture's action if applicable
+                    apply_action(curr_gesture)
+                    
+                    prev_gestures[handedness_index] = hand_sign_id
+                else:
+                    if curr_gesture["action"] == "mouse_move":
+                        cursor_mode = curr_gesture["cursor_mode"]
+                        # do corresponding mouse movement stuff (taking into account sensitivity)
+                        # ...
+
+                    # check for retriggers here, taking into account retrigger_cooldown_ms and
+                    # whether we need to end action for held retrigger actions (or perform them).
+                    # ... 
+
                 # Point gesture = point history
                 if (not DISABLE_POINT_HISTORY) and hand_sign_id == 2:
                     point_history.append(landmark_list[8])
@@ -260,7 +413,7 @@ def main():
         debug_image = draw_info(debug_image, fps, mode, number, profile_name)
 
         # Screen reflection #############################################################
-        cv.imshow('Hand Gesture Recognition', debug_image)
+        cv.imshow("Gesture Game Controller", debug_image)
 
     cap.release()
     cv.destroyAllWindows()
@@ -632,7 +785,6 @@ def draw_info(image, fps, mode, number, profile_name=None):
                        cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                        cv.LINE_AA)
     return image
-
 
 if __name__ == '__main__':
     main()

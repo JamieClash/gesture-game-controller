@@ -7,8 +7,7 @@ HANDS = ["left", "right"]
 FINGERS = ["thumb", "index", "middle", "fourth", "pinky"]
 
 SUPPORTED_MOUSE_EVENTS = ["left_click", "right_click", "middle_click", "double_click", "triple_click"]
-SUPPORTED_KEYS = sorted(pydirectinput.KEYBOARD_MAPPING.keys())
-NULL_KEY_SELECTION = ["."]
+SUPPORTED_KEYS = ["NULL"] + sorted(pydirectinput.KEYBOARD_MAPPING.keys())
 
 ACTION_MODES = ["key", "mouse_move", "mouse_click", "none"]
 KEY_MODES = ["tap", "hold"]
@@ -101,12 +100,10 @@ def open_gui(path, root):
             # dropdown for key
             key_var = tk.StringVar(value=settings["key"])
             actionType = settings["action"]
-            if actionType == "key":
+            if actionType == "key" or "mouse_move":
                 key_box = ttk.Combobox(canvas.inner, textvariable=key_var, values=SUPPORTED_KEYS)
-            elif actionType == "mouse_click":
+            else:  # "mouse_click"
                 key_box = ttk.Combobox(canvas.inner, textvariable=key_var, values=SUPPORTED_MOUSE_EVENTS)
-            else:
-                key_box = ttk.Combobox(canvas.inner, textvariable=key_var, values=NULL_KEY_SELECTION)
             key_box.grid(row=row, column=3)
 
             # dropdown for key mode (tap/hold)
@@ -122,12 +119,10 @@ def open_gui(path, root):
             # dropdown for retrigger key
             r_key_var = tk.StringVar(value=settings["retrigger_key"])
             actionType = settings["retrigger_action"]
-            if actionType == "key":
+            if actionType == "key" or "mouse_move":
                 r_key_box = ttk.Combobox(canvas.inner, textvariable=r_key_var, values=SUPPORTED_KEYS)
-            elif actionType == "mouse_click":
+            else:  # "mouse_click"
                 r_key_box = ttk.Combobox(canvas.inner, textvariable=r_key_var, values=SUPPORTED_MOUSE_EVENTS)
-            else:
-                r_key_box = ttk.Combobox(canvas.inner, textvariable=r_key_var, values=NULL_KEY_SELECTION)
             r_key_box.grid(row=row, column=6)
 
             # dropdown for retrigger key mode (tap/hold)

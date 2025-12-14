@@ -1,1 +1,1 @@
-C:/Users/Jamie Yeung/Downloads/Coursework/Project/Code/gesture-game-controller/profiles/custom_profiles/minecraft.json
+C:/Users/Jamie Yeung/Downloads/Coursework/Project/Code/gesture-game-controller/profiles/custom_profiles/default.json
