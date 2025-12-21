@@ -13,16 +13,33 @@ class GestureState:
         self.retrigger_threshold = 1.25
         self.relax_threshold = 1.1  # gesture must return to this size before re-triggering again
 
-        # 'starting' index finger tip position (8) stored as an 'origin' for absolute cursor movement. 
+        # movement threshold for gestures that control the mouse cursor.
+        self.cursor_movement_threshold = 0.01
+        
+        # smoothing coefficient for cursor movements
+        self.cursor_alpha = 0.2
+
+        # cursor movement deltas for smoothing
+        self.prev_dx = 0
+        self.prev_dy = 0
+
+        # 'starting' index finger tip position (8) stored as the initial position for relative cursor movement. 
         # cursor mode 1
-        self.base_absolute_origins = [None, None]
+        self.prev_rel_pos = [None, None]
 
         # 'starting' wrist position (0) stored as an 'origin' for panning cursor movement.
         # cursor mode 2
         self.base_panning_origins = [None, None]
-        self.panning_threshold = 0.2  # threshold for triggering cursor panning
+        self.panning_threshold = 0.2
+        self.panning_speed = 1
 
         # angles used for angle-based cursor movement. Angle between wrist (0) and second joint of middle finger (11)
         # cursor mode 3
-        self.prev_angles = [None, None]
+        self.prev_angles = [0, 0]
+        self.angle_threshold = 2  # in degrees
+        self.angle_gain = 10
+    
+    def reset_deltas(self):
+        self.prev_dx = 0
+        self.prev_dy = 0
         

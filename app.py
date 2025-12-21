@@ -13,7 +13,9 @@ import numpy as np
 import mediapipe as mp
 import pydirectinput
 
+import math
 import os
+from pathlib import Path
 import subprocess
 import time
 import threading
@@ -50,6 +52,9 @@ bad_keys = ["NULL", "left_click", "right_click", "middle_click", "double_click",
 # paths for gesture labels and keypoint path (latter is disabled)
 keypoint_label_path = "model/keypoint_classifier/keypoint_classifier_label.csv"
 keypoint_path = "model/keypoint_classifier/keypoint.csv"
+
+# base directory of this script
+BASE_DIR = Path(__file__).resolve().parent
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -105,7 +110,10 @@ def check_selection():
         path = current_process.stdout.read().strip()
         current_process = None
         if os.path.isfile(path):
-            return path
+            abs_path = Path(path)
+            rel_path = abs_path.relative_to(BASE_DIR)
+
+            return rel_path
     
     return None
 
@@ -183,7 +191,7 @@ def main():
     gesture_state = GestureState()
 
     # functions for the game controller
-    def apply_action(curr_gesture, retrigger=False):
+    def apply_key_action(curr_gesture, retrigger=False):
         if curr_gesture is None:
             return
 
@@ -221,7 +229,7 @@ def main():
                 else:
                     pydirectinput.press(curr_gesture["key"])
 
-    def end_action(prev_gesture, retrigger=False):
+    def end_key_action(prev_gesture, retrigger=False):
         if prev_gesture is None:
             return
 
@@ -303,6 +311,56 @@ def main():
             for i, s in enumerate(curr_state):
                 if s:
                     press_key(extend_keys[i])
+    
+    def compute_relative_delta(prev_pos, curr_pos):
+        dx = curr_pos[0] - prev_pos[0]
+        dy = curr_pos[1] - prev_pos[1]
+
+        return dx, dy
+
+    def compute_panning_delta(origin_pos, curr_pos):
+        dx = curr_pos[0] - origin_pos[0]
+        dy = curr_pos[1] - origin_pos[1]
+
+        if abs(dx) < gesture_state.panning_threshold:
+            dx = 0
+        else:
+            dx = math.copysign(gesture_state.panning_speed, dx)
+        
+        if abs(dy) < gesture_state.panning_threshold:
+            dy = 0
+        else:
+            dy = math.copysign(gesture_state.panning_speed, dy)
+        
+        return dx, dy
+
+    def compute_angle_delta(prev_angle, curr_angle):
+        delta_angle = curr_angle - prev_angle
+
+        if delta_angle < gesture_state.angle_threshold:
+            return 0, 0
+        
+        dx = delta_angle * gesture_state.angle_gain
+        dy = 0
+
+        return dx , dy
+
+    def apply_cursor_action(dx, dy, sens):
+        if abs(dx) < gesture_state.cursor_movement_threshold:
+            dx = 0
+        if abs(dy) < gesture_state.cursor_movement_threshold:
+            dy = 0
+        
+        dx *= sens
+        dy *= sens
+
+        # movement smoothing
+        alpha = gesture_state.cursor_alpha
+        smoothed_dx = alpha * dx + (1 - alpha) * gesture_state.prev_dx
+        smoothed_dy = alpha * dy + (1 - alpha) * gesture_state.prev_dy
+
+        pydirectinput.moveRel(int(smoothed_dx), int(smoothed_dy), duration=0)
+
 
     ### THREADS ###
     # thread for camera frames
@@ -385,8 +443,8 @@ def main():
                 if gesture_id == -1:
                     if gesture_state.prev_gestures[h_index] is not None:
                         pf = profile["gestures"][hand_labels[h_index]][str(gesture_state.prev_gestures[h_index])]
-                        end_action(pf)
-                        end_action(pf, True)
+                        end_key_action(pf)
+                        end_key_action(pf, True)
                         apply_transition_function(h_index, hand_profile[str(gesture_state.prev_gestures[h_index])], None)
                         gesture_state.prev_gestures[h_index] = None
                     continue
@@ -407,27 +465,23 @@ def main():
                     apply_transition_function(h_index, prev_gesture, curr_gesture)
                     
                     # end previous actions if applicable
-                    end_action(prev_gesture)
-                    end_action(prev_gesture, True)
+                    end_key_action(prev_gesture)
+                    end_key_action(prev_gesture, True)
 
                     # update everything stored according to gesture
                     cursor_mode = curr_gesture["cursor_mode"]
 
                     if curr_gesture["action"] == "mouse_move" and cursor_mode != 0:
                         if cursor_mode == 1:
-                            gesture_state.base_absolute_origins[h_index] = landmark_list[8]
+                            gesture_state.prev_rel_pos[h_index] = landmark_list[8].copy()
                         elif cursor_mode == 2:
-                            gesture_state.base_panning_origins[h_index] = landmark_list[0]
+                            gesture_state.base_panning_origins[h_index] = landmark_list[0].copy()
                         elif cursor_mode == 3:
-                            curr_angle = get_angle(landmark_list[0], landmark_list[11])
-                            if gesture_state.prev_angles[h_index] is not None:
-                                delta_angle = curr_angle - gesture_state.prev_angles[h_index]
-                            else:
-                                delta_angle = curr_angle
-                            # do some stuff with angles idk (actually isn't this for the section below)
+                            gesture_state.prev_angles[h_index] = 0  # reset angle to 0
+                        gesture_state.reset_deltas()
 
                     # apply current gesture's action if applicable
-                    apply_action(curr_gesture)
+                    apply_key_action(curr_gesture)
                     
                     gesture_state.prev_gestures[h_index] = gesture_id
 
@@ -437,11 +491,31 @@ def main():
                     gesture_state.retrigger_ready[h_index] = True
                 else:
                     cursor_mode = curr_gesture["cursor_mode"]
+
+                    # perform mouse movement if applicable
                     if curr_gesture["action"] == "mouse_move" and cursor_mode != 0:
                         sens = curr_gesture["cursor_sensitivity"]
 
-                        # do corresponding mouse movement stuff (taking into account sensitivity)
-                        # ...
+                        # do corresponding mouse movement, taking into account sensitivity
+                        if cursor_mode == 1:
+                            curr_pos = landmark_list[8]
+                            dx, dy = compute_relative_delta(gesture_state.prev_rel_pos[h_index], curr_pos)
+                            gesture_state.prev_rel_pos[h_index] = curr_pos.copy()
+                        elif cursor_mode == 2:
+                            curr_pos = landmark_list[0]
+                            dx, dy = compute_panning_delta(gesture_state.base_panning_origins[h_index], curr_pos)
+                        elif cursor_mode == 3:
+                            prev_angle = gesture_state.prev_angles[h_index]
+                            curr_angle = compute_angle(landmark_list[0], landmark_list[11])
+
+                            dx, dy = compute_angle_delta(prev_angle, curr_angle)
+                            gesture_state.prev_angles[h_index] = curr_angle
+                        else:
+                            break
+
+                        apply_cursor_action(dx, dy, sens)
+                        gesture_state.prev_dx = dx
+                        gesture_state.prev_dy = dy
 
                     # check for retriggers here, taking into account retrigger_cooldown_ms and
                     # whether we need to end action for held retrigger actions (or perform them).
@@ -454,12 +528,12 @@ def main():
                         (t - gesture_state.last_retrigger_time[h_index] > gesture_state.retrigger_cooldown[h_index])):
                         gesture_state.last_retrigger_time[h_index] = t
                         gesture_state.retrigger_ready[h_index] = False
-                        apply_action(curr_gesture, True)
+                        apply_key_action(curr_gesture, True)
                     # stop retriggered gesture
                     elif ((not gesture_state.retrigger_ready[h_index]) and 
                     (curr_area / gesture_state.base_retrigger_area[h_index] < gesture_state.relax_threshold)):
                         gesture_state.retrigger_ready[h_index] = True
-                        end_action(curr_gesture, True)
+                        end_key_action(curr_gesture, True)
             
             # provide data for rendering debug image if needed.
             if DEBUG:
@@ -593,7 +667,7 @@ def calc_landmark_list(image, landmarks):
 
     return landmark_point
 
-def get_angle(wrist_coords, mid_coords):
+def compute_angle(wrist_coords, mid_coords):
     return 0
 
 def pre_process_landmark(landmark_list):
