@@ -29,6 +29,8 @@ MAX_NUM_HANDS = 2
 MIN_DETECTION_CONFIDENCE = 0.7
 MIN_TRACKING_CONFIDENCE = 0.5
 
+DEBUG = False  # if True, shows bounding boxes, landmarks and gesture classification (causes lag)
+
 profile_folder = "profiles/custom_profiles/"
 default_profile_path = profile_folder + "default.json"
 
@@ -458,9 +460,11 @@ def main():
                     (curr_area / gesture_state.base_retrigger_area[h_index] < gesture_state.relax_threshold)):
                         gesture_state.retrigger_ready[h_index] = True
                         end_action(curr_gesture, True)
-
-            with render_lock:
-                render_snapshot = data.copy()
+            
+            # provide data for rendering debug image if needed.
+            if DEBUG:
+                with render_lock:
+                    render_snapshot = data.copy()
     
     def render_loop():
         global render_snapshot
@@ -503,19 +507,25 @@ def main():
 
     # setup and run threads
     threads = [threading.Thread(target=camera_loop), threading.Thread(target=perception_loop), 
-               threading.Thread(target=gesture_logic_loop), threading.Thread(target=render_loop)]
+               threading.Thread(target=gesture_logic_loop)]
+
+    # render debug information onto camera frames if debugging
+    if DEBUG:
+        threads.append(threading.Thread(target=render_loop))
     
     for t in threads:
         t.start()
     
     while not stop_event.is_set():
         # draw debug image
-        #with cv_lock:
-        #    debug_image = cv_output.copy() if cv_output is not None else None
-
+        if DEBUG:
+            with cv_lock:
+                debug_image = cv_output.copy() if cv_output is not None else None
+                
         # draw normal image without bounding boxes or gesture name
-        with camera_lock:
-            debug_image = camera_frame.copy() if camera_frame is not None else None
+        else:
+            with camera_lock:
+                debug_image = camera_frame.copy() if camera_frame is not None else None
 
         fps = cvFpsCalc.get()
 
