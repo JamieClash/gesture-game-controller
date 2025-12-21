@@ -20,8 +20,8 @@ class GestureState:
         self.cursor_alpha = 0.2
 
         # cursor movement deltas for smoothing
-        self.prev_dx = 0
-        self.prev_dy = 0
+        self.prev_dxs = [0, 0]
+        self.prev_dys = [0, 0]
 
         # 'starting' index finger tip position (8) stored as the initial position for relative cursor movement. 
         # cursor mode 1
@@ -39,7 +39,7 @@ class GestureState:
         self.angle_threshold = 2  # in degrees
         self.angle_gain = 10
     
-    def reset_deltas(self):
-        self.prev_dx = 0
-        self.prev_dy = 0
+    def reset_deltas(self, index):
+        self.prev_dxs[index] = 0
+        self.prev_dys[index] = 0
         

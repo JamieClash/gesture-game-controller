@@ -477,8 +477,8 @@ def main():
                         elif cursor_mode == 2:
                             gesture_state.base_panning_origins[h_index] = landmark_list[0].copy()
                         elif cursor_mode == 3:
-                            gesture_state.prev_angles[h_index] = 0  # reset angle to 0
-                        gesture_state.reset_deltas()
+                            gesture_state.prev_angles[h_index] = compute_angle(landmark_list, h_index)  # set initial angle
+                        gesture_state.reset_deltas(h_index)
 
                     # apply current gesture's action if applicable
                     apply_key_action(curr_gesture)
@@ -506,7 +506,7 @@ def main():
                             dx, dy = compute_panning_delta(gesture_state.base_panning_origins[h_index], curr_pos)
                         elif cursor_mode == 3:
                             prev_angle = gesture_state.prev_angles[h_index]
-                            curr_angle = compute_angle(landmark_list[0], landmark_list[11])
+                            curr_angle = compute_angle(landmark_list, h_index)
 
                             dx, dy = compute_angle_delta(prev_angle, curr_angle)
                             gesture_state.prev_angles[h_index] = curr_angle
@@ -514,8 +514,8 @@ def main():
                             break
 
                         apply_cursor_action(dx, dy, sens)
-                        gesture_state.prev_dx = dx
-                        gesture_state.prev_dy = dy
+                        gesture_state.prev_dxs[h_index] = dx
+                        gesture_state.prev_dys[h_index] = dy
 
                     # check for retriggers here, taking into account retrigger_cooldown_ms and
                     # whether we need to end action for held retrigger actions (or perform them).
@@ -667,8 +667,46 @@ def calc_landmark_list(image, landmarks):
 
     return landmark_point
 
-def compute_angle(wrist_coords, mid_coords):
-    return 0
+def normalize(v):
+    return v / np.linalg.norm(v)
+
+def construct_palm_basis(wrist, index_mcp, pinky_mcp):
+    v1 = index_mcp - wrist
+    v2 = pinky_mcp - wrist
+    v3 = np.cross(v1, v2)
+
+    v3 = normalize(v3)
+
+    b_x = normalize(v1 + v2)
+    b_z = v3
+    b_y = normalize(np.cross(b_z, b_x))
+
+    return b_x, b_y, b_z
+
+def compute_angle(landmarks, handedness):
+    landmarks = np.array(copy.deepcopy(landmarks))
+
+    # used for basis
+    wrist = landmarks[0]
+    index_mcp = landmarks[5]
+    pinky_mcp = landmarks[17]
+
+    b_x, b_y, _ = construct_palm_basis(wrist, index_mcp, pinky_mcp)
+
+    # wrist -> middle_pip used for control vector to determine angle
+    control = landmarks[10] - wrist
+
+    # project control vector onto the basis
+    x = np.dot(control, b_x)
+    y = np.dot(control, b_y)
+
+    angle = np.rad2deg(np.arctan2(x, y))
+
+    # flip sign if left handed
+    if not handedness:
+        angle *= -1
+    
+    return angle
 
 def pre_process_landmark(landmark_list):
     temp_landmark_list = copy.deepcopy(landmark_list)
