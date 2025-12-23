@@ -1,1 +1,1 @@
-profiles/custom_profiles/default.json
+profiles\custom_profiles\minecraft.json

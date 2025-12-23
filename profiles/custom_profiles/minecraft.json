@@ -5,7 +5,7 @@
         "left": {
             "0": {
                 "name": "left_fist",
-                "enabled": 1,
+                "enabled": 0,
                 "hand_state": [
                     0,
                     0,
@@ -13,8 +13,8 @@
                     0,
                     0
                 ],
-                "action": "mouse_move",
-                "key": "w",
+                "action": "key",
+                "key": "NULL",
                 "mode": "hold",
                 "retrigger_action": "key",
                 "retrigger_key": "space",

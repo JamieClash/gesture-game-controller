@@ -68,7 +68,7 @@ def open_gui(path, root):
         row += 1
 
         tk.Label(canvas.inner, text="Gesture").grid(row=row, column=0)
-        tk.Label(canvas.inner, text="Enable").grid(row=row, column=1)
+        tk.Label(canvas.inner, text="Enabled").grid(row=row, column=1)
         tk.Label(canvas.inner, text="Action").grid(row=row, column=2)
         tk.Label(canvas.inner, text="Key").grid(row=row, column=3)
         tk.Label(canvas.inner, text="Mode").grid(row=row, column=4)
@@ -86,7 +86,7 @@ def open_gui(path, root):
             tk.Label(canvas.inner, text=f"{gesture_name}").grid(row=row, column=0, sticky="w")
 
             # checkbox for enable/disable
-            enable_var = tk.BooleanVar(value=bool(settings["enable"]))
+            enable_var = tk.BooleanVar(value=bool(settings["enabled"]))
             enable_box = ttk.Checkbutton(canvas.inner, variable=enable_var)
             enable_box.grid(row=row, column=1)
 
@@ -156,7 +156,7 @@ def open_gui(path, root):
                              r_action_var=r_action_var, r_key_var=r_key_var, r_mode_var=r_mode_var,
                              cd_var=cd_var, transition_var=transition_var, c_mode_var=c_mode_var,
                              sens_var=sens_var):
-                profile["gestures"][hand][gesture_id]["enable"] = int(enable_var.get())
+                profile["gestures"][hand][gesture_id]["enabled"] = int(enable_var.get())
                 profile["gestures"][hand][gesture_id]["action"] = action_var.get()
                 profile["gestures"][hand][gesture_id]["key"] = key_var.get()
                 profile["gestures"][hand][gesture_id]["mode"] = mode_var.get()

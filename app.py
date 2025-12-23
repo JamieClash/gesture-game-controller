@@ -113,7 +113,7 @@ def check_selection():
             abs_path = Path(path)
             rel_path = abs_path.relative_to(BASE_DIR)
 
-            return rel_path
+            return str(rel_path)
     
     return None
 
@@ -155,6 +155,10 @@ def main():
 
     # set up gesture mapping
     prev_path = get_prev_path()
+
+    if not os.path.exists(prev_path):
+        prev_path = default_profile_path
+        set_prev_path(default_profile_path)
 
     global profile
     global profile_name
@@ -294,7 +298,7 @@ def main():
             # transform from prev_state to curr_state with transition keys
             for i in range(len(prev_state)):
                 p_s = prev_state[i]
-                c_s = curr_state[i]
+                c_s = curr_state[i] 
 
                 if p_s > c_s:
                     press_key(retract_keys[i])
@@ -345,7 +349,7 @@ def main():
 
         return dx , dy
 
-    def apply_cursor_action(dx, dy, sens):
+    def apply_cursor_action(dx, dy, sens, h_index):
         if abs(dx) < gesture_state.cursor_movement_threshold:
             dx = 0
         if abs(dy) < gesture_state.cursor_movement_threshold:
@@ -356,8 +360,8 @@ def main():
 
         # movement smoothing
         alpha = gesture_state.cursor_alpha
-        smoothed_dx = alpha * dx + (1 - alpha) * gesture_state.prev_dx
-        smoothed_dy = alpha * dy + (1 - alpha) * gesture_state.prev_dy
+        smoothed_dx = alpha * dx + (1 - alpha) * gesture_state.prev_dxs[h_index]
+        smoothed_dy = alpha * dy + (1 - alpha) * gesture_state.prev_dys[h_index]
 
         pydirectinput.moveRel(int(smoothed_dx), int(smoothed_dy), duration=0)
 
@@ -513,7 +517,7 @@ def main():
                         else:
                             break
 
-                        apply_cursor_action(dx, dy, sens)
+                        apply_cursor_action(dx, dy, sens, h_index)
                         gesture_state.prev_dxs[h_index] = dx
                         gesture_state.prev_dys[h_index] = dy
 
@@ -668,7 +672,12 @@ def calc_landmark_list(image, landmarks):
     return landmark_point
 
 def normalize(v):
-    return v / np.linalg.norm(v)
+    mag = np.linalg.norm(v)
+
+    if mag == 0:
+        return None
+
+    return v / mag
 
 def construct_palm_basis(wrist, index_mcp, pinky_mcp):
     v1 = index_mcp - wrist
@@ -679,6 +688,8 @@ def construct_palm_basis(wrist, index_mcp, pinky_mcp):
 
     b_x = normalize(v1 + v2)
     b_z = v3
+    print(b_x)
+    print(b_z)
     b_y = normalize(np.cross(b_z, b_x))
 
     return b_x, b_y, b_z
