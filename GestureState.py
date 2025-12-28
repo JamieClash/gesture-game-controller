@@ -30,14 +30,14 @@ class GestureState:
         # 'starting' wrist position (0) stored as an 'origin' for panning cursor movement.
         # cursor mode 2
         self.base_panning_origins = [None, None]
-        self.panning_threshold = 0.2
-        self.panning_speed = 1
+        self.panning_threshold = 3  # 0.2
+        self.panning_speed = 200  # probably make configurable
 
         # angles used for angle-based cursor movement. Angle between wrist (0) and second joint of middle finger (11)
         # cursor mode 3
-        self.prev_angles = [0, 0]
+        self.prev_angle_vectors = [None, None]
         self.angle_threshold = 2  # in degrees
-        self.angle_gain = 10
+        self.angle_gain = 150  # probably make configurable
     
     def reset_deltas(self, index):
         self.prev_dxs[index] = 0

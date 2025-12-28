@@ -124,6 +124,9 @@ camera_lock = threading.Lock()
 perception_output = None
 perception_lock = threading.Lock()
 
+cursor_motion = None
+cursor_motion_lock = threading.Lock()
+
 render_snapshot = None
 render_lock = threading.Lock()
 
@@ -200,7 +203,7 @@ def main():
             return
 
         # not applicable if gesture supports transition function
-        if curr_gesture["use_finger_transitions"] or not curr_gesture["enabled"]:
+        if curr_gesture["use_finger_transitions"] or curr_gesture["enabled"] == 0:
             return
         
         def apply_click(click):
@@ -238,7 +241,7 @@ def main():
             return
 
         # not applicable if gesture supports transition function
-        if prev_gesture["use_finger_transitions"] or not prev_gesture["enabled"]:
+        if prev_gesture["use_finger_transitions"] or prev_gesture["enabled"] == 0:
             return
         
         # release key if applicable
@@ -257,13 +260,13 @@ def main():
                 pydirectinput.press(key)
         
         def supported(gesture):
-            return (gesture["use_finger_transitions"] and gesture["enabled"])
+            return (gesture["use_finger_transitions"] and (gesture["enabled"] == 1))
 
         transition_profile = profile["transition_functions"][hand_labels[handedness]]
         extend_keys = [transition_profile[str(i)]["extend_key"] for i in range(5)]
         retract_keys = [transition_profile[str(i)]["retract_key"] for i in range(5)]
 
-        if not transition_profile["enabled"]:
+        if transition_profile["enabled"] == 0:
             return
         
         if prev_gesture is None and curr_gesture is None:
@@ -335,21 +338,28 @@ def main():
             dy = 0
         else:
             dy = math.copysign(gesture_state.panning_speed, dy)
-        
+
         return dx, dy
 
-    def compute_angle_delta(prev_angle, curr_angle):
-        delta_angle = curr_angle - prev_angle
-
-        if delta_angle < gesture_state.angle_threshold:
+    def compute_angle_delta(prev_vector, curr_vector):
+        if prev_vector is None:
             return 0, 0
-        
+
+        dot = np.dot(prev_vector, curr_vector)
+        cross = np.cross(prev_vector, curr_vector)
+
+        delta_angle = np.rad2deg(np.arctan2(cross, dot))
+
+        if abs(delta_angle) < gesture_state.angle_threshold:
+            return 0, 0
+
         dx = delta_angle * gesture_state.angle_gain
         dy = 0
 
-        return dx , dy
+        return dx, dy
 
-    def apply_cursor_action(dx, dy, sens, h_index):
+    # get dx, dy for pydirectinput, which will be called by a separate thread
+    def get_cursor_action(dx, dy, prev_dx, prev_dy, sens):
         if abs(dx) < gesture_state.cursor_movement_threshold:
             dx = 0
         if abs(dy) < gesture_state.cursor_movement_threshold:
@@ -360,10 +370,14 @@ def main():
 
         # movement smoothing
         alpha = gesture_state.cursor_alpha
-        smoothed_dx = alpha * dx + (1 - alpha) * gesture_state.prev_dxs[h_index]
-        smoothed_dy = alpha * dy + (1 - alpha) * gesture_state.prev_dys[h_index]
+        smoothed_dx = alpha * dx + (1 - alpha) * prev_dx
+        smoothed_dy = alpha * dy + (1 - alpha) * prev_dy
 
-        pydirectinput.moveRel(int(smoothed_dx), int(smoothed_dy), duration=0)
+        return (int(smoothed_dx), int(smoothed_dy))
+    
+    # apply cursor movement
+    def apply_cursor_action(dx, dy):
+        pydirectinput.moveRel(dx, dy, duration=0)
 
 
     ### THREADS ###
@@ -429,6 +443,7 @@ def main():
 
     def gesture_logic_loop():
         global perception_output
+        global cursor_motion
         global render_snapshot
         global profile
 
@@ -481,7 +496,7 @@ def main():
                         elif cursor_mode == 2:
                             gesture_state.base_panning_origins[h_index] = landmark_list[0].copy()
                         elif cursor_mode == 3:
-                            gesture_state.prev_angles[h_index] = compute_angle(landmark_list, h_index)  # set initial angle
+                            gesture_state.prev_angle_vectors[h_index] = compute_angle_vector(landmark_list)
                         gesture_state.reset_deltas(h_index)
 
                     # apply current gesture's action if applicable
@@ -493,6 +508,8 @@ def main():
                     gesture_state.last_retrigger_time[h_index] = 0
                     gesture_state.retrigger_cooldown[h_index] = curr_gesture["retrigger_cooldown_ms"]
                     gesture_state.retrigger_ready[h_index] = True
+                    gesture_state.prev_dxs[h_index] = 0
+                    gesture_state.prev_dys[h_index] = 0
                 else:
                     cursor_mode = curr_gesture["cursor_mode"]
 
@@ -509,15 +526,22 @@ def main():
                             curr_pos = landmark_list[0]
                             dx, dy = compute_panning_delta(gesture_state.base_panning_origins[h_index], curr_pos)
                         elif cursor_mode == 3:
-                            prev_angle = gesture_state.prev_angles[h_index]
-                            curr_angle = compute_angle(landmark_list, h_index)
+                            prev_vector = gesture_state.prev_angle_vectors[h_index]
+                            curr_vector = compute_angle_vector(landmark_list)
 
-                            dx, dy = compute_angle_delta(prev_angle, curr_angle)
-                            gesture_state.prev_angles[h_index] = curr_angle
+                            dx, dy = compute_angle_delta(prev_vector, curr_vector)
+                            gesture_state.prev_angle_vectors[h_index] = curr_vector
                         else:
                             break
 
-                        apply_cursor_action(dx, dy, sens, h_index)
+                        #with cursor_motion_lock:
+                        #    cursor_motion = get_cursor_action(dx, dy, gesture_state.prev_dxs[h_index], 
+                        #                                      gesture_state.prev_dys[h_index], sens)
+                        
+                        new_dx, new_dy = get_cursor_action(dx, dy, gesture_state.prev_dxs[h_index], 
+                                                   gesture_state.prev_dys[h_index], sens)
+                        apply_cursor_action(new_dx, new_dy)
+
                         gesture_state.prev_dxs[h_index] = dx
                         gesture_state.prev_dys[h_index] = dy
 
@@ -543,6 +567,23 @@ def main():
             if DEBUG:
                 with render_lock:
                     render_snapshot = data.copy()
+
+    def cursor_motion_loop():
+        global cursor_motion
+
+        dx = 0
+        dy = 0
+
+        while not stop_event.is_set():
+
+            with cursor_motion_lock:
+                if cursor_motion is not None:
+                    dx, dy = cursor_motion[0], cursor_motion[1]
+            
+            if dx != 0 or dy != 0:
+                apply_cursor_action(dx, dy)
+            
+            time.sleep(1/120)
     
     def render_loop():
         global render_snapshot
@@ -585,7 +626,7 @@ def main():
 
     # setup and run threads
     threads = [threading.Thread(target=camera_loop), threading.Thread(target=perception_loop), 
-               threading.Thread(target=gesture_logic_loop)]
+               threading.Thread(target=gesture_logic_loop), threading.Thread(target=cursor_motion_loop)]
 
     # render debug information onto camera frames if debugging
     if DEBUG:
@@ -674,50 +715,16 @@ def calc_landmark_list(image, landmarks):
 def normalize(v):
     mag = np.linalg.norm(v)
 
-    if mag == 0:
+    if mag <= 1e-6:
         return None
 
     return v / mag
 
-def construct_palm_basis(wrist, index_mcp, pinky_mcp):
-    v1 = index_mcp - wrist
-    v2 = pinky_mcp - wrist
-    v3 = np.cross(v1, v2)
+def compute_angle_vector(landmark_list):
+    wrist = np.array(landmark_list[0])
+    middle_mcp = np.array(landmark_list[9])
 
-    v3 = normalize(v3)
-
-    b_x = normalize(v1 + v2)
-    b_z = v3
-    print(b_x)
-    print(b_z)
-    b_y = normalize(np.cross(b_z, b_x))
-
-    return b_x, b_y, b_z
-
-def compute_angle(landmarks, handedness):
-    landmarks = np.array(copy.deepcopy(landmarks))
-
-    # used for basis
-    wrist = landmarks[0]
-    index_mcp = landmarks[5]
-    pinky_mcp = landmarks[17]
-
-    b_x, b_y, _ = construct_palm_basis(wrist, index_mcp, pinky_mcp)
-
-    # wrist -> middle_pip used for control vector to determine angle
-    control = landmarks[10] - wrist
-
-    # project control vector onto the basis
-    x = np.dot(control, b_x)
-    y = np.dot(control, b_y)
-
-    angle = np.rad2deg(np.arctan2(x, y))
-
-    # flip sign if left handed
-    if not handedness:
-        angle *= -1
-    
-    return angle
+    return normalize(middle_mcp - wrist)
 
 def pre_process_landmark(landmark_list):
     temp_landmark_list = copy.deepcopy(landmark_list)

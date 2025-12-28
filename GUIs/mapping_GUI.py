@@ -11,7 +11,7 @@ SUPPORTED_KEYS = ["NULL"] + sorted(pydirectinput.KEYBOARD_MAPPING.keys())
 
 ACTION_MODES = ["key", "mouse_move", "mouse_click", "none"]
 KEY_MODES = ["tap", "hold"]
-CURSOR_MODES = ["none", "absolute movement", "panning", "angle movement"]  # 0, 1, 2, 3 in json
+CURSOR_MODES = ["none", "relative movement", "panning", "angle movement"]  # 0, 1, 2, 3 in json
 
 class ScrollWidget(tk.Frame):
     def __init__(self, parent, *args, **kwargs):

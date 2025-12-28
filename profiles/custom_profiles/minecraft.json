@@ -5,7 +5,7 @@
         "left": {
             "0": {
                 "name": "left_fist",
-                "enabled": 0,
+                "enabled": 1,
                 "hand_state": [
                     0,
                     0,
@@ -13,11 +13,11 @@
                     0,
                     0
                 ],
-                "action": "key",
-                "key": "NULL",
+                "action": "mouse_move",
+                "key": "w",
                 "mode": "hold",
                 "retrigger_action": "key",
-                "retrigger_key": "space",
+                "retrigger_key": "NULL",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -412,15 +412,15 @@
                     1,
                     1
                 ],
-                "action": "mouse_move",
-                "key": "NULL",
+                "action": "key",
+                "key": "t",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "NULL",
+                "retrigger_key": "t",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 2,
+                "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
             "20": {
@@ -876,11 +876,11 @@
                     1,
                     1
                 ],
-                "action": "key",
-                "key": "t",
+                "action": "mouse_move",
+                "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "t",
+                "retrigger_key": "NULL",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
