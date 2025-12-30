@@ -139,6 +139,10 @@ stop_event = threading.Event()
 profile = None
 profile_name = None
 
+# used to ensure mouse button holding does not spam injected events
+left_click_down = False
+right_click_down = False
+
 # capture device variable
 cap = None
 
@@ -198,6 +202,25 @@ def main():
     gesture_state = GestureState()
 
     # functions for the game controller
+    def hold_click(key, release_key=False):
+        global left_click_down
+        global right_click_down
+
+        if key == "right_click":
+            if (not right_click_down) and (not release_key):
+                pydirectinput.mouseDown(button="right")
+                right_click_down = True
+            elif right_click_down and release_key:
+                pydirectinput.mouseUp(button="right")
+                right_click_down = False
+        elif key == "left_click":
+            if (not left_click_down) and (not release_key):
+                pydirectinput.mouseDown(button="left")
+                left_click_down = True
+            elif left_click_down and release_key:
+                pydirectinput.mouseUp(button="left")
+                left_click_down = False
+
     def apply_key_action(curr_gesture, retrigger=False):
         if curr_gesture is None:
             return
@@ -221,7 +244,10 @@ def main():
         # apply action if applicable
         if retrigger:
             if curr_gesture["retrigger_action"] == "mouse_click":
-                apply_click(curr_gesture["retrigger_key"])
+                if curr_gesture["retrigger_mode"] == "hold":
+                    hold_click(curr_gesture["retrigger_key"])
+                else:
+                    apply_click(curr_gesture["retrigger_key"])
             elif curr_gesture["retrigger_key"] not in bad_keys:
                 if curr_gesture["retrigger_mode"] == "hold":
                     pydirectinput.keyDown(curr_gesture["retrigger_key"])
@@ -229,7 +255,10 @@ def main():
                     pydirectinput.press(curr_gesture["retrigger_key"])
         else:
             if curr_gesture["action"] == "mouse_click":
-                apply_click(curr_gesture["key"])
+                if curr_gesture["mode"] == "hold":
+                    hold_click(curr_gesture["key"])
+                else:
+                    apply_click(curr_gesture["key"])
             elif curr_gesture["key"] not in bad_keys:
                 if curr_gesture["mode"] == "hold":
                     pydirectinput.keyDown(curr_gesture["key"])
@@ -245,12 +274,16 @@ def main():
             return
         
         # release key if applicable
-        if (retrigger and prev_gesture["retrigger_action"] != "mouse_click" and prev_gesture["retrigger_mode"] == "hold" 
-            and prev_gesture["retrigger_key"] not in bad_keys):
-            pydirectinput.keyUp(prev_gesture["retrigger_key"])
-        elif (not retrigger and prev_gesture["action"] != "mouse_click" and prev_gesture["mode"] == "hold" 
-            and prev_gesture["key"] not in bad_keys):
-            pydirectinput.keyUp(prev_gesture["key"])
+        if retrigger and prev_gesture["retrigger_mode"] == "hold":
+            if prev_gesture["retrigger_action"] == "mouse_click":
+                hold_click(prev_gesture["retrigger_key"], True)
+            elif prev_gesture["retrigger_key"] not in bad_keys:
+                pydirectinput.keyUp(prev_gesture["retrigger_key"])
+        elif (not retrigger) and prev_gesture["mode"] == "hold":
+            if prev_gesture["action"] == "mouse_click":
+                hold_click(prev_gesture["key"], True)
+            elif prev_gesture["key"] not in bad_keys:
+                pydirectinput.keyUp(prev_gesture["key"])
     
     def apply_transition_function(handedness, prev_gesture, curr_gesture):
         global profile
@@ -505,7 +538,7 @@ def main():
                     gesture_state.prev_gestures[h_index] = gesture_id
 
                     gesture_state.base_retrigger_area[h_index] = calc_area(brect)
-                    gesture_state.last_retrigger_time[h_index] = 0
+                    gesture_state.last_retrigger_time[h_index] = time.time() * 1000
                     gesture_state.retrigger_cooldown[h_index] = curr_gesture["retrigger_cooldown_ms"]
                     gesture_state.retrigger_ready[h_index] = True
                     gesture_state.prev_dxs[h_index] = 0
@@ -568,6 +601,7 @@ def main():
                 with render_lock:
                     render_snapshot = data.copy()
 
+    # currently not used. considered for a separate thread to control mouse movement.
     def cursor_motion_loop():
         global cursor_motion
 
