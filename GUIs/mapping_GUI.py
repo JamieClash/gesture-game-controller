@@ -6,7 +6,7 @@ from tkinter import ttk
 HANDS = ["left", "right"]
 FINGERS = ["thumb", "index", "middle", "fourth", "pinky"]
 
-SUPPORTED_MOUSE_EVENTS = ["left_click", "right_click", "middle_click", "double_click", "triple_click"]
+SUPPORTED_MOUSE_EVENTS = ["left_click", "right_click", "middle_click", "double_click", "scroll_wheel_up", "scroll_wheel_down"]
 SUPPORTED_KEYS = ["NULL"] + sorted(pydirectinput.KEYBOARD_MAPPING.keys())
 
 ACTION_MODES = ["key", "mouse_move", "mouse_click", "none"]
@@ -100,7 +100,7 @@ def open_gui(path, root):
             # dropdown for key
             key_var = tk.StringVar(value=settings["key"])
             actionType = settings["action"]
-            if actionType == "key" or "mouse_move":
+            if actionType == "key" or actionType == "mouse_move":
                 key_box = ttk.Combobox(canvas.inner, textvariable=key_var, values=SUPPORTED_KEYS)
             else:  # "mouse_click"
                 key_box = ttk.Combobox(canvas.inner, textvariable=key_var, values=SUPPORTED_MOUSE_EVENTS)
@@ -119,7 +119,7 @@ def open_gui(path, root):
             # dropdown for retrigger key
             r_key_var = tk.StringVar(value=settings["retrigger_key"])
             actionType = settings["retrigger_action"]
-            if actionType == "key" or "mouse_move":
+            if actionType == "key" or actionType == "mouse_move":
                 r_key_box = ttk.Combobox(canvas.inner, textvariable=r_key_var, values=SUPPORTED_KEYS)
             else:  # "mouse_click"
                 r_key_box = ttk.Combobox(canvas.inner, textvariable=r_key_var, values=SUPPORTED_MOUSE_EVENTS)

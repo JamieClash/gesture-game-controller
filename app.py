@@ -22,9 +22,9 @@ import threading
 
 from utils import CvFpsCalc
 from model import KeyPointClassifier
-from model import PointHistoryClassifier
 
 from GestureState import GestureState
+from mouse_input import mouse_wrapper
 
 MAX_NUM_HANDS = 2
 
@@ -47,7 +47,7 @@ current_process = None
 
 # used for querying the profile dictionary when having indices instead of strings
 hand_labels = ["left", "right"]
-bad_keys = ["NULL", "left_click", "right_click", "middle_click", "double_click", "triple_click"]
+bad_keys = ["NULL", "left_click", "right_click", "middle_click", "double_click", "scroll_wheel_up", "scroll_wheel_down"]
 
 # paths for gesture labels and keypoint path (latter is disabled)
 keypoint_label_path = "model/keypoint_classifier/keypoint_classifier_label.csv"
@@ -147,7 +147,6 @@ right_click_down = False
 cap = None
 
 def main():
-    # Argument parsing #################################################################
     args = get_args()
 
     cap_device = args.device
@@ -173,13 +172,13 @@ def main():
     profile = get_mappingDict(prev_path)
     profile_name = profile["profile_name"]
 
-    # Camera preparation ###############################################################
+    # camera
     global cap
     cap = cv.VideoCapture(cap_device)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
 
-    # Model load #############################################################
+    # load model
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
         static_image_mode=use_static_image_mode,
@@ -190,7 +189,7 @@ def main():
 
     keypoint_classifier = KeyPointClassifier()
 
-    # Read labels ###########################################################
+    # read labels
     with open(keypoint_label_path, encoding='utf-8-sig') as f:
         keypoint_classifier_labels = csv.reader(f)
         keypoint_classifier_labels = [
@@ -208,17 +207,17 @@ def main():
 
         if key == "right_click":
             if (not right_click_down) and (not release_key):
-                pydirectinput.mouseDown(button="right")
+                mouse_wrapper.click_down(button="right")
                 right_click_down = True
             elif right_click_down and release_key:
-                pydirectinput.mouseUp(button="right")
+                mouse_wrapper.click_up(button="right")
                 right_click_down = False
         elif key == "left_click":
             if (not left_click_down) and (not release_key):
-                pydirectinput.mouseDown(button="left")
+                mouse_wrapper.click_down(button="left")
                 left_click_down = True
             elif left_click_down and release_key:
-                pydirectinput.mouseUp(button="left")
+                mouse_wrapper.click_up(button="left")
                 left_click_down = False
 
     def apply_key_action(curr_gesture, retrigger=False):
@@ -231,15 +230,21 @@ def main():
         
         def apply_click(click):
             if click == "left_click":
-                pydirectinput.leftClick()
+                #pydirectinput.leftClick()
+                mouse_wrapper.left_click()
             elif click == "right_click":
-                pydirectinput.rightClick()
+                #pydirectinput.rightClick()
+                mouse_wrapper.right_click()
             elif click == "middle_click":
-                pydirectinput.middleClick()
+                #pydirectinput.middleClick()
+                mouse_wrapper.middle_click()
             elif click == "double_click":
-                pydirectinput.doubleClick()
-            elif click == "triple_click":
-                pydirectinput.tripleClick()
+                #pydirectinput.doubleClick()
+                mouse_wrapper.double_click()
+            elif click == "scroll_wheel_up":
+                mouse_wrapper.scroll(steps=1)
+            elif click == "scroll_wheel_down":
+                mouse_wrapper.scroll(steps=-1)
         
         # apply action if applicable
         if retrigger:
@@ -353,8 +358,9 @@ def main():
                     press_key(extend_keys[i])
     
     def compute_relative_delta(prev_pos, curr_pos):
-        dx = curr_pos[0] - prev_pos[0]
-        dy = curr_pos[1] - prev_pos[1]
+        gain = gesture_state.rel_gain
+        dx = (curr_pos[0] - prev_pos[0]) * gain
+        dy = (curr_pos[1] - prev_pos[1]) * gain
 
         return dx, dy
 
@@ -362,17 +368,22 @@ def main():
         dx = curr_pos[0] - origin_pos[0]
         dy = curr_pos[1] - origin_pos[1]
 
-        if abs(dx) < gesture_state.panning_threshold:
-            dx = 0
-        else:
-            dx = math.copysign(gesture_state.panning_speed, dx)
-        
-        if abs(dy) < gesture_state.panning_threshold:
-            dy = 0
-        else:
-            dy = math.copysign(gesture_state.panning_speed, dy)
+        distance = math.hypot(dx, dy)
 
-        return dx, dy
+        threshold = gesture_state.panning_threshold
+
+        if distance < threshold:
+            return 0, 0, True
+
+        n_x = dx / distance
+        n_y = dy / distance
+
+        speed = min(gesture_state.panning_max_speed, gesture_state.panning_gain*(distance - threshold))
+
+        dx = n_x * speed
+        dy = n_y * speed
+
+        return dx, dy, False
 
     def compute_angle_delta(prev_vector, curr_vector):
         if prev_vector is None:
@@ -410,7 +421,8 @@ def main():
     
     # apply cursor movement
     def apply_cursor_action(dx, dy):
-        pydirectinput.moveRel(dx, dy, duration=0)
+        #pydirectinput.moveRel(dx, dy, duration=0)
+        mouse_wrapper.move_rel(dx, dy)
 
 
     ### THREADS ###
@@ -557,7 +569,9 @@ def main():
                             gesture_state.prev_rel_pos[h_index] = curr_pos.copy()
                         elif cursor_mode == 2:
                             curr_pos = landmark_list[0]
-                            dx, dy = compute_panning_delta(gesture_state.base_panning_origins[h_index], curr_pos)
+                            dx, dy, reset = compute_panning_delta(gesture_state.base_panning_origins[h_index], curr_pos)
+                            if reset:
+                                gesture_state.base_panning_origins[h_index] = curr_pos.copy()
                         elif cursor_mode == 3:
                             prev_vector = gesture_state.prev_angle_vectors[h_index]
                             curr_vector = compute_angle_vector(landmark_list)
@@ -617,7 +631,7 @@ def main():
             if dx != 0 or dy != 0:
                 apply_cursor_action(dx, dy)
             
-            time.sleep(1/120)
+            time.sleep(1/240)
     
     def render_loop():
         global render_snapshot
@@ -789,7 +803,7 @@ def pre_process_landmark(landmark_list):
 
     return temp_landmark_list
 
-
+# below is code directly from the adapted sample program
 def pre_process_point_history(image, point_history):
     image_width, image_height = image.shape[1], image.shape[0]
 
