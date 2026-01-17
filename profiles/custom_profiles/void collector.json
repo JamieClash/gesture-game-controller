@@ -1,9 +1,9 @@
 {
-    "profile_name": "Default",
+    "profile_name": "void collector",
     "mouse_settings": {
         "relative_gain": 25,
-        "pan_speed": 50,
-        "angle_gain": 2500
+        "pan_speed": 15,
+        "angle_gain": 150
     },
     "gestures": {
         "left": {
@@ -230,8 +230,8 @@
                 "action": "key",
                 "key": "NULL",
                 "mode": "tap",
-                "retrigger_action": "key",
-                "retrigger_key": "9",
+                "retrigger_action": "mouse_click",
+                "retrigger_key": "right_click",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -291,7 +291,7 @@
                     0
                 ],
                 "action": "key",
-                "key": "NULL",
+                "key": "1",
                 "mode": "tap",
                 "retrigger_action": "key",
                 "retrigger_key": "3",
@@ -503,13 +503,13 @@
                     0
                 ],
                 "action": "key",
-                "key": "space",
-                "mode": "hold",
-                "retrigger_action": "key",
-                "retrigger_key": "NULL",
-                "retrigger_mode": "hold",
+                "key": "NULL",
+                "mode": "tap",
+                "retrigger_action": "mouse_click",
+                "retrigger_key": "left_click",
+                "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
-                "use_finger_transitions": 0,
+                "use_finger_transitions": 1,
                 "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
@@ -610,11 +610,11 @@
                 "action": "key",
                 "key": "NULL",
                 "mode": "tap",
-                "retrigger_action": "key",
-                "retrigger_key": "q",
+                "retrigger_action": "mouse_click",
+                "retrigger_key": "left_click",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
-                "use_finger_transitions": 0,
+                "use_finger_transitions": 1,
                 "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
@@ -715,11 +715,11 @@
                 "action": "key",
                 "key": "NULL",
                 "mode": "tap",
-                "retrigger_action": "key",
-                "retrigger_key": "return",
+                "retrigger_action": "mouse_click",
+                "retrigger_key": "left_click",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
-                "use_finger_transitions": 0,
+                "use_finger_transitions": 1,
                 "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
@@ -830,7 +830,7 @@
             },
             "17": {
                 "name": "right_palm",
-                "enabled": 0,
+                "enabled": 1,
                 "hand_state": [
                     1,
                     1,
@@ -841,11 +841,11 @@
                 "action": "key",
                 "key": "NULL",
                 "mode": "tap",
-                "retrigger_action": "key",
-                "retrigger_key": "NULL",
+                "retrigger_action": "mouse_click",
+                "retrigger_key": "left_click",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
-                "use_finger_transitions": 0,
+                "use_finger_transitions": 1,
                 "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
@@ -937,49 +937,49 @@
     },
     "transition_functions": {
         "left": {
-            "enabled": 0,
+            "enabled": 1,
             "0": {
-                "extend_key": "1",
-                "retract_key": "1"
+                "extend_key": "5",
+                "retract_key": "5"
             },
             "1": {
-                "extend_key": "2",
-                "retract_key": "2"
+                "extend_key": "4",
+                "retract_key": "4"
             },
             "2": {
                 "extend_key": "3",
                 "retract_key": "3"
             },
             "3": {
-                "extend_key": "4",
-                "retract_key": "4"
+                "extend_key": "2",
+                "retract_key": "2"
             },
             "4": {
-                "extend_key": "5",
-                "retract_key": "5"
+                "extend_key": "1",
+                "retract_key": "1"
             }
         },
         "right": {
-            "enabled": 0,
+            "enabled": 1,
             "0": {
-                "extend_key": "1",
-                "retract_key": "1"
+                "extend_key": "5",
+                "retract_key": "5"
             },
             "1": {
-                "extend_key": "2",
-                "retract_key": "2"
+                "extend_key": "4",
+                "retract_key": "4"
             },
             "2": {
                 "extend_key": "3",
                 "retract_key": "3"
             },
             "3": {
-                "extend_key": "4",
-                "retract_key": "4"
+                "extend_key": "2",
+                "retract_key": "2"
             },
             "4": {
-                "extend_key": "5",
-                "retract_key": "5"
+                "extend_key": "1",
+                "retract_key": "1"
             }
         }
     }

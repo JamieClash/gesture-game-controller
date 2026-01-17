@@ -63,6 +63,47 @@ def open_gui(path, root):
     canvas.pack(fill="both", expand=True)
 
     row = 0
+
+    mouse_settings = profile["mouse_settings"]
+    tk.Label(canvas.inner, text="MOUSE SETTINGS", font=("Arial", 14, "bold")).grid(row=row, column=0, sticky="w", pady=10)
+    row += 1
+    tk.Label(canvas.inner, text="setting").grid(row=row, column=0)
+    tk.Label(canvas.inner, text="value").grid(row=row, column=1)
+    row += 1
+
+    tk.Label(canvas.inner, text="Relative gain").grid(row=row, column=0, sticky="w")
+    r_gain_var = tk.IntVar(value=mouse_settings["relative_gain"])
+    r_gain_box = tk.Spinbox(canvas.inner, from_=0, to=100, increment=1, textvariable=r_gain_var)
+    r_gain_box.grid(row=row, column=1)
+    row += 1
+
+    tk.Label(canvas.inner, text="Max panning speed").grid(row=row, column=0, sticky="w")
+    p_speed_var = tk.IntVar(value=mouse_settings["pan_speed"])
+    p_speed_box = tk.Spinbox(canvas.inner, from_=0, to=200, increment=5, textvariable=p_speed_var)
+    p_speed_box.grid(row=row, column=1)
+    row += 1
+
+    tk.Label(canvas.inner, text="Angle gain").grid(row=row, column=0, sticky="w")
+    a_gain_var = tk.IntVar(value=mouse_settings["angle_gain"])
+    a_gain_box = tk.Spinbox(canvas.inner, from_=0, to=5000, increment=50, textvariable=a_gain_var)
+    a_gain_box.grid(row=row, column=1)
+    row += 1
+
+    def save_changes(event=None, r_gain_var=r_gain_var, p_speed_var=p_speed_var, a_gain_var=a_gain_var):
+        profile["mouse_settings"]["relative_gain"] = int(r_gain_var.get())
+        profile["mouse_settings"]["pan_speed"] = int(p_speed_var.get())
+        profile["mouse_settings"]["angle_gain"] = int(a_gain_var.get())
+
+        save_profile(profile, path)
+    
+    r_gain_box.configure(command=save_changes)
+    r_gain_box.bind("<<KeyRelease>>", save_changes)
+    p_speed_box.configure(command=save_changes)
+    p_speed_box.bind("<<KeyRelease>>", save_changes)
+    a_gain_box.configure(command=save_changes)
+    a_gain_box.bind("<<KeyRelease>>", save_changes)
+
+
     for hand in HANDS:
         tk.Label(canvas.inner, text=f"{hand.upper()} HAND GESTURES", font=("Arial", 14, "bold")).grid(row=row, column=0, sticky="w", pady=10)
         row += 1

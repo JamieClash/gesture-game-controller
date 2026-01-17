@@ -1,6 +1,10 @@
 {
     "profile_name": "minecraft",
-    "description": "Default mappings for the gesture game controller.",
+    "mouse_settings": {
+        "relative_gain": 25,
+        "pan_speed": 50,
+        "angle_gain": 2500
+    },
     "gestures": {
         "left": {
             "0": {
@@ -38,7 +42,7 @@
                 "key": "w",
                 "mode": "hold",
                 "retrigger_action": "key",
-                "retrigger_key": "space",
+                "retrigger_key": "NULL",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -98,11 +102,11 @@
                     0
                 ],
                 "action": "key",
-                "key": "d",
-                "mode": "hold",
+                "key": "NULL",
+                "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "NULL",
-                "retrigger_mode": "hold",
+                "retrigger_key": "7",
+                "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
                 "cursor_mode": 0,
@@ -140,11 +144,11 @@
                     0
                 ],
                 "action": "key",
-                "key": "NULL",
-                "mode": "tap",
+                "key": "d",
+                "mode": "hold",
                 "retrigger_action": "key",
-                "retrigger_key": "7",
-                "retrigger_mode": "tap",
+                "retrigger_key": "NULL",
+                "retrigger_mode": "hold",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
                 "cursor_mode": 0,
@@ -412,15 +416,15 @@
                     1,
                     1
                 ],
-                "action": "key",
+                "action": "mouse_move",
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "t",
+                "retrigger_key": "NULL",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 0,
+                "cursor_mode": 2,
                 "cursor_sensitivity": 1.0
             },
             "20": {
@@ -816,8 +820,8 @@
                 "action": "key",
                 "key": "NULL",
                 "mode": "tap",
-                "retrigger_action": "mouse_click",
-                "retrigger_key": "scroll_wheel_up",
+                "retrigger_action": "key",
+                "retrigger_key": "t",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -900,8 +904,8 @@
                 "action": "key",
                 "key": "NULL",
                 "mode": "tap",
-                "retrigger_action": "key",
-                "retrigger_key": "i",
+                "retrigger_action": "mouse_click",
+                "retrigger_key": "scroll_wheel_up",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,

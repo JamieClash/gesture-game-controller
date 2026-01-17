@@ -198,7 +198,7 @@ def main():
     
     cvFpsCalc = CvFpsCalc(buffer_len=10)
 
-    gesture_state = GestureState()
+    gesture_state = GestureState(profile)
 
     # functions for the game controller
     def hold_click(key, release_key=False):
@@ -220,12 +220,13 @@ def main():
                 mouse_wrapper.click_up(button="left")
                 left_click_down = False
 
-    def apply_key_action(curr_gesture, retrigger=False):
+    def apply_key_action(curr_gesture, hand=0, retrigger=False):
         if curr_gesture is None:
             return
 
-        # not applicable if gesture supports transition function
-        if curr_gesture["use_finger_transitions"] or curr_gesture["enabled"] == 0:
+        # not applicable
+        if (curr_gesture["enabled"] == 0 or (curr_gesture["use_finger_transitions"] and 
+            not (profile["transition_functions"][hand_labels[hand]]["enabled"]))):
             return
         
         def apply_click(click):
@@ -270,12 +271,13 @@ def main():
                 else:
                     pydirectinput.press(curr_gesture["key"])
 
-    def end_key_action(prev_gesture, retrigger=False):
+    def end_key_action(prev_gesture, hand=0, retrigger=False):
         if prev_gesture is None:
             return
 
-        # not applicable if gesture supports transition function
-        if prev_gesture["use_finger_transitions"] or prev_gesture["enabled"] == 0:
+        # not applicable
+        if (prev_gesture["enabled"] == 0 or (prev_gesture["use_finger_transitions"] and 
+            not (profile["transition_functions"][hand_labels[hand]]["enabled"]))):
             return
         
         # release key if applicable
@@ -507,8 +509,8 @@ def main():
                 if gesture_id == -1:
                     if gesture_state.prev_gestures[h_index] is not None:
                         pf = profile["gestures"][hand_labels[h_index]][str(gesture_state.prev_gestures[h_index])]
-                        end_key_action(pf)
-                        end_key_action(pf, True)
+                        end_key_action(pf, h_index)
+                        end_key_action(pf, h_index, True)
                         apply_transition_function(h_index, hand_profile[str(gesture_state.prev_gestures[h_index])], None)
                         gesture_state.prev_gestures[h_index] = None
                     continue
@@ -529,8 +531,8 @@ def main():
                     apply_transition_function(h_index, prev_gesture, curr_gesture)
                     
                     # end previous actions if applicable
-                    end_key_action(prev_gesture)
-                    end_key_action(prev_gesture, True)
+                    end_key_action(prev_gesture, h_index)
+                    end_key_action(prev_gesture, h_index, True)
 
                     # update everything stored according to gesture
                     cursor_mode = curr_gesture["cursor_mode"]
@@ -545,7 +547,7 @@ def main():
                         gesture_state.reset_deltas(h_index)
 
                     # apply current gesture's action if applicable
-                    apply_key_action(curr_gesture)
+                    apply_key_action(curr_gesture, hand=h_index)
                     
                     gesture_state.prev_gestures[h_index] = gesture_id
 
@@ -603,12 +605,12 @@ def main():
                         (t - gesture_state.last_retrigger_time[h_index] > gesture_state.retrigger_cooldown[h_index])):
                         gesture_state.last_retrigger_time[h_index] = t
                         gesture_state.retrigger_ready[h_index] = False
-                        apply_key_action(curr_gesture, True)
+                        apply_key_action(curr_gesture, h_index, True)
                     # stop retriggered gesture
                     elif ((not gesture_state.retrigger_ready[h_index]) and 
                     (curr_area / gesture_state.base_retrigger_area[h_index] < gesture_state.relax_threshold)):
                         gesture_state.retrigger_ready[h_index] = True
-                        end_key_action(curr_gesture, True)
+                        end_key_action(curr_gesture, h_index, True)
             
             # provide data for rendering debug image if needed.
             if DEBUG:
@@ -708,6 +710,7 @@ def main():
             set_prev_path(profile_path)
             profile = get_mappingDict(profile_path)
             profile_name = profile["profile_name"]
+            gesture_state.update_state(profile)
 
         if debug_image is not None:
             debug_image = draw_info(debug_image, fps, profile_name)
