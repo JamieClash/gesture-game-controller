@@ -2,8 +2,8 @@
     "profile_name": "void collector",
     "mouse_settings": {
         "relative_gain": 25,
-        "pan_speed": 15,
-        "angle_gain": 150
+        "pan_speed": 4,
+        "angle_gain": 100
     },
     "gestures": {
         "left": {
@@ -206,15 +206,15 @@
                     0,
                     0
                 ],
-                "action": "key",
+                "action": "mouse_move",
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "ctrl",
+                "retrigger_key": "NULL",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
-                "cursor_mode": 0,
+                "cursor_mode": 1,
                 "cursor_sensitivity": 1.0
             },
             "10": {
@@ -291,7 +291,7 @@
                     0
                 ],
                 "action": "key",
-                "key": "1",
+                "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
                 "retrigger_key": "3",
@@ -429,7 +429,7 @@
             },
             "20": {
                 "name": "left_grabbing",
-                "enabled": 0,
+                "enabled": 1,
                 "hand_state": [
                     1,
                     1,
@@ -441,8 +441,8 @@
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "NULL",
-                "retrigger_mode": "tap",
+                "retrigger_key": "f",
+                "retrigger_mode": "hold",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
                 "cursor_mode": 0,
@@ -486,9 +486,9 @@
                 "mode": "tap",
                 "retrigger_action": "mouse_click",
                 "retrigger_key": "left_click",
-                "retrigger_mode": "hold",
+                "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
-                "use_finger_transitions": 0,
+                "use_finger_transitions": 1,
                 "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
@@ -568,11 +568,11 @@
                 "action": "key",
                 "key": "NULL",
                 "mode": "tap",
-                "retrigger_action": "key",
-                "retrigger_key": "x",
+                "retrigger_action": "mouse_click",
+                "retrigger_key": "left_click",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
-                "use_finger_transitions": 0,
+                "use_finger_transitions": 1,
                 "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
@@ -589,11 +589,11 @@
                 "action": "key",
                 "key": "NULL",
                 "mode": "tap",
-                "retrigger_action": "key",
-                "retrigger_key": "tab",
+                "retrigger_action": "mouse_click",
+                "retrigger_key": "left_click",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
-                "use_finger_transitions": 0,
+                "use_finger_transitions": 1,
                 "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },
@@ -691,14 +691,14 @@
                     0,
                     1
                 ],
-                "action": "mouse_click",
+                "action": "key",
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "mouse_click",
-                "retrigger_key": "right_click",
+                "retrigger_key": "left_click",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
-                "use_finger_transitions": 0,
+                "use_finger_transitions": 1,
                 "cursor_mode": 0,
                 "cursor_sensitivity": 1.0
             },

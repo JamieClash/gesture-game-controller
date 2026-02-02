@@ -1,14 +1,22 @@
 # Gesture Game Controller
 
 This program adapts from a sample program that recognizes hand gestures with a simple MLP using detected Mediapipe key points.
-(https://github.com/kinivi/hand-gesture-recognition-mediapipe). However, only certain functions for debugging (such as drawing landmark skeletons and points onto debugging images) and opencv-mediapipe interactions are kept from the original program. 
+(https://github.com/kinivi/hand-gesture-recognition-mediapipe). Some elements from the original program are employed: debugging functions for drawing landmark skeletons and points onto images, the KeyPointClassifier classes (the latter is kept), opencv-mediapipe interactions and a modified version of the original 'app.py' file, renamed to 'coordinate_collection.py' as it is used to record mediapipe keypoint coordinates for collecting additional data for gesture classification.
 
-# Requirements
-* mediapipe 0.8.1
-* OpenCV 3.4.2 or Later
-* Tensorflow 2.3.0 or Later<br>tf-nightly 2.5.0.dev or later (Only when creating a TFLite for an LSTM model)
-* scikit-learn 0.23.2 or Later (Only if you want to display the confusion matrix) 
-* matplotlib 3.3.2 or Later (Only if you want to display the confusion matrix)
+# Libraries
+* OpenCV 4.11.0.86
+* mediapipe 0.10.21
+* Tensorflow 2.15.0
+* scikit-learn 1.7.2
+* PyDirectInput 1.0.4
+* KerasTuner 1.4.8
+* protobuf 4.25.8
+* jax 0.4.28
+* jaxlib 0.4.28
+* ml-dtypes 0.2.0
+* pandas 2.3.3 (plotting graphics)
+* matplotlib 3.10.0 (plotting graphics)
+* seaborn 0.13.2 (confusion matrix)
 
 # Directory
 <pre>
@@ -33,6 +41,7 @@ This program adapts from a sample program that recognizes hand gestures with a s
 │          
 └─utils
     └─cvfpscalc.py
+
 </pre>
 ### app.py
 This is a sample program for inference.<br>
@@ -52,14 +61,6 @@ The following files are stored.
 * Trained model(keypoint_classifier.tflite)
 * Label data(keypoint_classifier_label.csv)
 * Inference module(keypoint_classifier.py)
-
-### model/point_history_classifier
-This directory stores files related to finger gesture recognition.<br>
-The following files are stored.
-* Training data(point_history.csv)
-* Trained model(point_history_classifier.tflite)
-* Label data(point_history_classifier_label.csv)
-* Inference module(point_history_classifier.py)
 
 ### utils/cvfpscalc.py
 This is a module for FPS measurement.

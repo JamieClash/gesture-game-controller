@@ -11,46 +11,18 @@ from collections import deque
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
-import pydirectinput
-
-import os
-import subprocess
-import time
 
 from utils import CvFpsCalc
 from model import KeyPointClassifier
-from model import PointHistoryClassifier
 
 MAX_NUM_HANDS = 2
-DISABLE_POINT_HISTORY = True
 
 MIN_DETECTION_CONFIDENCE = 0.7
 MIN_TRACKING_CONFIDENCE = 0.5
 
-profile_folder = "profiles/custom_profiles/"
-default_profile_path = profile_folder + "default.json"
-
-# used to retrieve previously used gesture-key mapping profile
-prev_profile_path = "profiles/prev.txt"
-
-# used for selecting profiles
-profile_selector_path = "GUIs/profile_selector_GUI.py"
-
-# used to keep track of whether profile selection UI is open
-current_process = None 
-
-# used for querying the profile dictionary when having indices instead of strings
-hand_labels = ["left", "right"]
-bad_keys = ["NULL", "left_click", "right_click", "middle_click", "double_click", "triple_click"]
-
-# paths for gesture labels and keypoint path (latter is disabled)
+# paths for gesture labels and keypoint path
 keypoint_label_path = "model/keypoint_classifier/keypoint_classifier_label.csv"
 keypoint_path = "model/keypoint_classifier/keypoint.csv"
-
-# note that the point history model provided by the sample program 
-# is NOT used by the gesture game controller
-point_label_path = "model/point_history_classifier/point_history_classifier_label.csv"
-point_path = "model/point_history_classifier/point_history.csv"
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -73,44 +45,6 @@ def get_args():
 
     return args
 
-def get_prev_path():
-    with open(prev_profile_path, "r") as f:
-        path = f.readline()
-    return path
-
-def set_prev_path(profile_path):
-    with open(prev_profile_path, "w") as f:
-        f.write(profile_path)
-
-def get_mappingDict(profile_path):
-    with open(profile_path, "r") as f:
-        data = json.load(f)
-    return data
-
-def open_profile_selector():
-    global current_process
-
-    # selector already open.
-    if current_process is not None and current_process.poll() is None:
-        return
-
-    current_process = subprocess.Popen(["python", profile_selector_path], stdout=subprocess.PIPE, text=True)
-
-def check_selection():
-    global current_process
-
-    if current_process is None:
-        return None
-
-    if current_process.poll() is not None:
-        path = current_process.stdout.read().strip()
-        current_process = None
-        if os.path.isfile(path):
-            return path
-    
-    return None
-
-
 def main():
     # Argument parsing #################################################################
     args = get_args()
@@ -124,11 +58,6 @@ def main():
     min_tracking_confidence = args.min_tracking_confidence
 
     use_brect = True
-
-    # set up gesture mapping
-    prev_path = get_prev_path()
-    profile = get_mappingDict(prev_path)
-    profile_name = profile["profile_name"]
 
     # Camera preparation ###############################################################
     cap = cv.VideoCapture(cap_device)
@@ -146,7 +75,6 @@ def main():
 
     keypoint_classifier = KeyPointClassifier()
 
-    point_history_classifier = PointHistoryClassifier()
 
     # Read labels ###########################################################
     with open(keypoint_label_path, encoding='utf-8-sig') as f:
@@ -154,185 +82,15 @@ def main():
         keypoint_classifier_labels = [
             row[0] for row in keypoint_classifier_labels
         ]
-    if not DISABLE_POINT_HISTORY:
-        with open(point_label_path, encoding='utf-8-sig') as f:
-            point_history_classifier_labels = csv.reader(f)
-            point_history_classifier_labels = [
-                row[0] for row in point_history_classifier_labels
-            ]
 
     # FPS Measurement ########################################################
     cvFpsCalc = CvFpsCalc(buffer_len=10)
 
-    # Coordinate history #################################################################
-    history_length = 16
-    point_history = deque(maxlen=history_length)
-
-    if not DISABLE_POINT_HISTORY:
-        # Finger gesture history ################################################
-        finger_gesture_history = deque(maxlen=history_length)
-
-    #  ########################################################################
+    #########################################################################
     mode = 0
-
-    #  ##################################################################
-    # information we keep track of for the game controller
-
-    # [left_gesture_index, right_gesture_index] --> Access gesture settings via profile["gestures"]["left" || "right"][gesture_index]
-    # used for transition functions and releasing held keys
-    prev_gestures = [None, None]
-
-    # baseline gesture bounding box area. If increased in size beyond threshold, 'retrigger' a gesture's mapped action.
-    base_retrigger_area = [None, None]
-    last_retrigger_time = [0, 0]
-    retrigger_cooldown = [0, 0]
-    retrigger_ready = [True, True]
-
-    retrigger_threshold = 1.25
-    relax_threshold = 1.1  # gesture must return to this size before re-triggering again
-
-    # 'starting' index finger tip position (8) stored as an 'origin' for absolute cursor movement. 
-    # cursor mode 1
-    base_absolute_origins = [None, None]
-
-    # 'starting' wrist position (0) stored as an 'origin' for panning cursor movement.
-    # cursor mode 2
-    base_panning_origins = [None, None]
-    panning_threshold = 0.2  # threshold for triggering cursor panning
-
-    # angles used for angle-based cursor movement. Angle between wrist (0) and second joint of middle finger (11)
-    # cursor mode 3
-    prev_angles = [None, None]
 
     while True:
         fps = cvFpsCalc.get()
-
-        # check if a new mapping profile has been selected
-        profile_path = check_selection()
-        if profile_path:
-            set_prev_path(profile_path)
-            profile = get_mappingDict(profile_path)
-            profile_name = profile["profile_name"]
-        
-        # functions for the game controller
-        def apply_action(curr_gesture, retrigger=False):
-            if curr_gesture is None:
-                return
-
-            # not applicable if gesture supports transition function
-            if curr_gesture["use_finger_transitions"] or not curr_gesture["enabled"]:
-                return
-            
-            def apply_click(click):
-                if click == "left_click":
-                    pydirectinput.leftClick()
-                elif click == "right_click":
-                    pydirectinput.rightClick()
-                elif click == "middle_click":
-                    pydirectinput.middleClick()
-                elif click == "double_click":
-                    pydirectinput.doubleClick()
-                elif click == "triple_click":
-                    pydirectinput.tripleClick()
-            
-            # apply action if applicable
-            if retrigger:
-                if curr_gesture["retrigger_action"] == "mouse_click":
-                    apply_click(curr_gesture["retrigger_key"])
-                elif curr_gesture["retrigger_key"] not in bad_keys:
-                    if curr_gesture["retrigger_mode"] == "hold":
-                        pydirectinput.keyDown(curr_gesture["retrigger_key"])
-                    else:
-                        pydirectinput.press(curr_gesture["retrigger_key"])
-            else:
-                if curr_gesture["action"] == "mouse_click":
-                    apply_click(curr_gesture["key"])
-                elif curr_gesture["key"] not in bad_keys:
-                    if curr_gesture["mode"] == "hold":
-                        pydirectinput.keyDown(curr_gesture["key"])
-                    else:
-                        pydirectinput.press(curr_gesture["key"])
-
-        def end_action(prev_gesture, retrigger=False):
-            if prev_gesture is None:
-                return
-
-            # not applicable if gesture supports transition function
-            if prev_gesture["use_finger_transitions"] or not prev_gesture["enabled"]:
-                return
-            
-            # release key if applicable
-            if (retrigger and prev_gesture["retrigger_action"] != "mouse_click" and prev_gesture["retrigger_mode"] == "hold" 
-                and prev_gesture["retrigger_key"] not in bad_keys):
-                pydirectinput.keyUp(prev_gesture["retrigger_key"])
-            elif (not retrigger and prev_gesture["action"] != "mouse_click" and prev_gesture["mode"] == "hold" 
-                and prev_gesture["key"] not in bad_keys):
-                pydirectinput.keyUp(prev_gesture["key"])
-
-        def apply_transition_function(handedness, prev_gesture, curr_gesture):
-            def press_key(key):
-                if key != "NULL":
-                    pydirectinput.press(key)
-            
-            def supported(gesture):
-                return (gesture["use_finger_transitions"] and gesture["enabled"])
-
-            transition_profile = profile["transition_functions"][hand_labels[handedness]]
-            extend_keys = [transition_profile[str(i)]["extend_key"] for i in range(5)]
-            retract_keys = [transition_profile[str(i)]["retract_key"] for i in range(5)]
-
-            if not transition_profile["enabled"]:
-                return
-            
-            if prev_gesture is None and curr_gesture is None:
-                return
-            elif prev_gesture is None and curr_gesture is not None:
-                # treat prev_gesture as [0,0,0,0,0]
-                if supported(curr_gesture):
-                    curr_state = curr_gesture["hand_state"]
-                    for i, s in enumerate(curr_state):
-                        if s:
-                            press_key(extend_keys[i])
-                return
-            elif prev_gesture is not None and curr_gesture is None:
-                # treat curr_gesture as [0,0,0,0,0]
-                if supported(prev_gesture):
-                    prev_state = prev_gesture["hand_state"]
-                    for i, s in enumerate(prev_state):
-                        if s:
-                            press_key(retract_keys[i])
-                return
-
-            prev_support = supported(prev_gesture)
-            curr_support = supported(curr_gesture)
-
-            if (not prev_support) and (not curr_support):
-                return
-
-            prev_state = prev_gesture["hand_state"]
-            curr_state = curr_gesture["hand_state"]
-
-            if prev_support and curr_support:
-                # transform from prev_state to curr_state with transition keys
-                for i in range(len(prev_state)):
-                    p_s = prev_state[i]
-                    c_s = curr_state[i]
-
-                    if p_s > c_s:
-                        press_key(retract_keys[i])
-                    elif c_s > p_s:
-                        press_key(extend_keys[i])
-
-            elif prev_support:
-                # reset prev_state to [0,0,0,0,0] with transition keys
-                for i, s in enumerate(prev_state):
-                    if s:
-                        press_key(retract_keys[i])
-            elif curr_support:
-                # set [0,0,0,0,0] to curr_state with transition keys
-                for i, s in enumerate(curr_state):
-                    if s:
-                        press_key(extend_keys[i])
 
         # Process Key (ESC: end) #################################################
         key = cv.waitKey(10)
@@ -354,9 +112,6 @@ def main():
         results = hands.process(image)
         image.flags.writeable = True
 
-        # used to check if hand(s) have left the camera view, in order to end corresponding actions
-        hand_presence = [False, False]
-
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
@@ -370,106 +125,18 @@ def main():
                 pre_processed_landmark_list = pre_process_landmark(
                     landmark_list)
                 
-                pre_processed_point_history_list = [] if DISABLE_POINT_HISTORY else pre_process_point_history(debug_image, point_history)
                 # Write to the dataset file
-                logging_csv(number, mode, pre_processed_landmark_list,
-                            pre_processed_point_history_list)
+                logging_csv(number, mode, pre_processed_landmark_list)
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
 
-                # process information for game controller
-                h_index = 0 if handedness.classification[0].label[0:] == "Left" else 1
-
-                hand_presence[h_index] = True
-                hand_profile = profile["gestures"][hand_labels[h_index]]
-                curr_gesture = hand_profile[str(hand_sign_id)]
-                
-                # check if gesture for this hand has changed.
-                if prev_gestures[h_index] != hand_sign_id:
-                    if prev_gestures[h_index] is not None:
-                        prev_gesture = hand_profile[str(prev_gestures[h_index])]
-
-                        # apply transition function if applicable
-                        apply_transition_function(h_index, prev_gesture, curr_gesture)
-                        
-                        # end previous actions if applicable
-                        end_action(prev_gesture)
-                        end_action(prev_gesture, True)
-
-                    # update everything stored according to gesture
-                    cursor_mode = curr_gesture["cursor_mode"]
-
-                    if curr_gesture["action"] == "mouse_move" and cursor_mode != 0:
-                        if cursor_mode == 1:
-                            base_absolute_origins[h_index] = landmark_list[8]
-                        elif cursor_mode == 2:
-                            base_panning_origins[h_index] = landmark_list[0]
-                        elif cursor_mode == 3:
-                            curr_angle = get_angle(landmark_list[0], landmark_list[11])
-                            if prev_angles[h_index] is not None:
-                                delta_angle = curr_angle - prev_angles[h_index]
-                            else:
-                                delta_angle = curr_angle
-                            # do some stuff with angles idk
-
-                    # apply current gesture's action if applicable
-                    apply_action(curr_gesture)
-                    
-                    prev_gestures[h_index] = hand_sign_id
-
-                    base_retrigger_area[h_index] = calc_area(brect)
-                    last_retrigger_time[h_index] = 0
-                    retrigger_cooldown[h_index] = curr_gesture["retrigger_cooldown_ms"]
-                    retrigger_ready[h_index] = True
-                else:
-                    cursor_mode = curr_gesture["cursor_mode"]
-                    if curr_gesture["action"] == "mouse_move" and cursor_mode != 0:
-                        sens = curr_gesture["cursor_sensitivity"]
-
-                        # do corresponding mouse movement stuff (taking into account sensitivity)
-                        # ...
-
-                    # check for retriggers here, taking into account retrigger_cooldown_ms and
-                    # whether we need to end action for held retrigger actions (or perform them).
-                    curr_area = calc_area(brect)
-                    t = time.time() * 1000  # ms
-
-                    # retrigger gesture
-                    if (retrigger_ready[h_index] and (curr_area / base_retrigger_area[h_index] > retrigger_threshold) and 
-                        (t - last_retrigger_time[h_index] > retrigger_cooldown[h_index])):
-                        last_retrigger_time[h_index] = t
-                        retrigger_ready[h_index] = False
-                        apply_action(curr_gesture, True)
-                    # stop retriggered gesture
-                    elif (not retrigger_ready[h_index]) and (curr_area / base_retrigger_area[h_index] < relax_threshold):
-                        retrigger_ready[h_index] = True
-                        end_action(curr_gesture, True)
-
-                # Point gesture = point history
-                if (not DISABLE_POINT_HISTORY) and hand_sign_id == 2:
-                    point_history.append(landmark_list[8])
-                else:
-                    point_history.append([0, 0])
-
-                # Finger gesture classification
-                if not DISABLE_POINT_HISTORY:
-                    finger_gesture_id = 0
-                    point_history_len = len(pre_processed_point_history_list)
-                    if point_history_len == (history_length * 2):
-                        finger_gesture_id = point_history_classifier(
-                            pre_processed_point_history_list)
-
-                    # Calculates the gesture IDs in the latest detection
-                    finger_gesture_history.append(finger_gesture_id)
-                    most_common_fg_id = Counter(
-                        finger_gesture_history).most_common()
 
                 # Drawing part
                 debug_image = draw_bounding_rect(use_brect, debug_image, brect)
                 debug_image = draw_landmarks(debug_image, landmark_list)
 
-                label = "" if DISABLE_POINT_HISTORY else point_history_classifier_labels[most_common_fg_id[0][0]]
+                label = ""
 
                 debug_image = draw_info_text(
                     debug_image,
@@ -478,35 +145,17 @@ def main():
                     keypoint_classifier_labels[hand_sign_id],
                     label,
                 )
-        else:
-            point_history.append([0, 0])
-        
-        # end actions for gestures that are no longer in camera view
-        for i, present in enumerate(hand_presence):
-            if not present:
-                if prev_gestures[i] is not None:
-                    pf = profile["gestures"][hand_labels[i]][str(prev_gestures[i])]
-                    end_action(pf)
-                    end_action(pf, True)
-                    prev_gestures[i] = None   
 
-        debug_image = draw_point_history(debug_image, point_history)
-        debug_image = draw_info(debug_image, fps, mode, number, profile_name)
+        debug_image = draw_info(debug_image, fps, mode, number)
 
         # Screen reflection #############################################################
-        cv.imshow("Gesture Game Controller", debug_image)
+        cv.imshow("Coordinate Collection", debug_image)
 
     cap.release()
     cv.destroyAllWindows()
 
 
 def select_mode(key, mode):
-    if key == 101:  # e
-        open_profile_selector()
-
-    return -1, 0
-
-    # disabled for the gesture controller
     number = -1
     if 48 <= key <= 57:  # 0 ~ 9
         number = key - 48
@@ -593,40 +242,13 @@ def pre_process_landmark(landmark_list):
     return temp_landmark_list
 
 
-def pre_process_point_history(image, point_history):
-    image_width, image_height = image.shape[1], image.shape[0]
-
-    temp_point_history = copy.deepcopy(point_history)
-
-    # Convert to relative coordinates
-    base_x, base_y = 0, 0
-    for index, point in enumerate(temp_point_history):
-        if index == 0:
-            base_x, base_y = point[0], point[1]
-
-        temp_point_history[index][0] = (temp_point_history[index][0] -
-                                        base_x) / image_width
-        temp_point_history[index][1] = (temp_point_history[index][1] -
-                                        base_y) / image_height
-
-    # Convert to a one-dimensional list
-    temp_point_history = list(
-        itertools.chain.from_iterable(temp_point_history))
-
-    return temp_point_history
-
-
-def logging_csv(number, mode, landmark_list, point_history_list):
+def logging_csv(number, mode, landmark_list):
     if mode == 0 or mode == 3:
         pass
     if mode == 1 and (0 <= number <= 9):
         with open(keypoint_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *landmark_list])
-    if mode == 2 and (0 <= number <= 9):
-        with open(point_path, 'a', newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow([number, *point_history_list])
     return
 
 
@@ -848,25 +470,13 @@ def draw_info_text(image, brect, handedness, hand_sign_text,
     return image
 
 
-def draw_point_history(image, point_history):
-    for index, point in enumerate(point_history):
-        if point[0] != 0 and point[1] != 0:
-            cv.circle(image, (point[0], point[1]), 1 + int(index / 2),
-                      (152, 251, 152), 2)
-
-    return image
-
-
-def draw_info(image, fps, mode, number, profile_name=None):
+def draw_info(image, fps, mode, number):
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (0, 0, 0), 4, cv.LINE_AA)
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (255, 255, 255), 2, cv.LINE_AA)
 
     mode_string = ['Logging Key Point', 'Logging Point History']
-    cv.putText(image, "Current profile: " + profile_name, (10, 90),
-                cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
-                cv.LINE_AA)
     if 1 <= mode <= 2:
         cv.putText(image, "MODE:" + mode_string[mode - 1], (10, 90),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,

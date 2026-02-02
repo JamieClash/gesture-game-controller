@@ -31,9 +31,9 @@ MAX_NUM_HANDS = 2
 MIN_DETECTION_CONFIDENCE = 0.7
 MIN_TRACKING_CONFIDENCE = 0.5
 
-DEBUG = False  # if True, shows bounding boxes, landmarks and gesture classification (causes lag)
+DEBUG = False  # if True, shows bounding boxes, landmarks and gesture classification (may cause lag)
 
-profile_folder = "profiles/custom_profiles/"
+profile_folder = "profiles/custom_profiles/" 
 default_profile_path = profile_folder + "default.json"
 
 # used to retrieve previously used gesture-key mapping profile
@@ -231,16 +231,12 @@ def main():
         
         def apply_click(click):
             if click == "left_click":
-                #pydirectinput.leftClick()
                 mouse_wrapper.left_click()
             elif click == "right_click":
-                #pydirectinput.rightClick()
                 mouse_wrapper.right_click()
             elif click == "middle_click":
-                #pydirectinput.middleClick()
                 mouse_wrapper.middle_click()
             elif click == "double_click":
-                #pydirectinput.doubleClick()
                 mouse_wrapper.double_click()
             elif click == "scroll_wheel_up":
                 mouse_wrapper.scroll(steps=1)
