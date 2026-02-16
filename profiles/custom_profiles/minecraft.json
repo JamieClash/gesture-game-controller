@@ -1,9 +1,9 @@
 {
     "profile_name": "minecraft",
     "mouse_settings": {
-        "relative_gain": 25,
-        "pan_speed": 50,
-        "angle_gain": 2500
+        "relative_gain": 2,
+        "pan_speed": 2,
+        "angle_gain": 20
     },
     "gestures": {
         "left": {
@@ -210,7 +210,7 @@
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "ctrl",
+                "retrigger_key": "tab",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -252,7 +252,7 @@
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "shift",
+                "retrigger_key": "capslock",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -527,7 +527,7 @@
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "capslock",
+                "retrigger_key": "shift",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -590,7 +590,7 @@
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "tab",
+                "retrigger_key": "ctrl",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,

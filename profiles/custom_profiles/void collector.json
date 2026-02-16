@@ -1,9 +1,9 @@
 {
     "profile_name": "void collector",
     "mouse_settings": {
-        "relative_gain": 25,
-        "pan_speed": 4,
-        "angle_gain": 100
+        "relative_gain": 4,
+        "pan_speed": 2,
+        "angle_gain": 20
     },
     "gestures": {
         "left": {
@@ -252,7 +252,7 @@
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "shift",
+                "retrigger_key": "capslock",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,
@@ -527,7 +527,7 @@
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "capslock",
+                "retrigger_key": "shift",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,

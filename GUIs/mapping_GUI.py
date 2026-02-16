@@ -73,19 +73,19 @@ def open_gui(path, root):
 
     tk.Label(canvas.inner, text="Relative gain").grid(row=row, column=0, sticky="w")
     r_gain_var = tk.IntVar(value=mouse_settings["relative_gain"])
-    r_gain_box = tk.Spinbox(canvas.inner, from_=0, to=100, increment=1, textvariable=r_gain_var)
+    r_gain_box = tk.Spinbox(canvas.inner, from_=1, to=10, increment=1, textvariable=r_gain_var)
     r_gain_box.grid(row=row, column=1)
     row += 1
 
     tk.Label(canvas.inner, text="Max panning speed").grid(row=row, column=0, sticky="w")
     p_speed_var = tk.IntVar(value=mouse_settings["pan_speed"])
-    p_speed_box = tk.Spinbox(canvas.inner, from_=0, to=200, increment=5, textvariable=p_speed_var)
+    p_speed_box = tk.Spinbox(canvas.inner, from_=1, to=10, increment=0.5, textvariable=p_speed_var)
     p_speed_box.grid(row=row, column=1)
     row += 1
 
     tk.Label(canvas.inner, text="Angle gain").grid(row=row, column=0, sticky="w")
     a_gain_var = tk.IntVar(value=mouse_settings["angle_gain"])
-    a_gain_box = tk.Spinbox(canvas.inner, from_=0, to=5000, increment=50, textvariable=a_gain_var)
+    a_gain_box = tk.Spinbox(canvas.inner, from_=0, to=100, increment=5, textvariable=a_gain_var)
     a_gain_box.grid(row=row, column=1)
     row += 1
 
