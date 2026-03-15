@@ -293,7 +293,9 @@ def main():
 
         def press_key(key):
             if key != "NULL":
-                pydirectinput.press(key)
+                pydirectinput.keyDown(key)
+                time.sleep(0.02)
+                pydirectinput.keyUp(key)
         
         def supported(gesture):
             return (gesture["use_finger_transitions"] and (gesture["enabled"] == 1))
