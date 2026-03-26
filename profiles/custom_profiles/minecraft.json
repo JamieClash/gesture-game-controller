@@ -632,7 +632,7 @@
                 "key": "NULL",
                 "mode": "tap",
                 "retrigger_action": "key",
-                "retrigger_key": "v",
+                "retrigger_key": "c",
                 "retrigger_mode": "tap",
                 "retrigger_cooldown_ms": 100,
                 "use_finger_transitions": 0,

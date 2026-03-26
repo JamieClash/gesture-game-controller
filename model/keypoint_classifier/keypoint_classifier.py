@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# modified from original sample program
+
 import numpy as np
 import tensorflow as tf
 

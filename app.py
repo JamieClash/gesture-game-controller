@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# modified from original sample program
+
 import csv
 import json
 import copy
@@ -123,9 +126,6 @@ camera_lock = threading.Lock()
 
 perception_output = None
 perception_lock = threading.Lock()
-
-cursor_motion = None
-cursor_motion_lock = threading.Lock()
 
 render_snapshot = None
 render_lock = threading.Lock()
@@ -372,6 +372,7 @@ def main():
 
         threshold = gesture_state.panning_threshold
 
+        # stop movement, reset origin
         if distance < threshold:
             return 0, 0, True
 
@@ -402,7 +403,7 @@ def main():
 
         return dx, dy
 
-    # get dx, dy for pydirectinput, which will be called by a separate thread
+    # get dx, dy for cursor movement
     def get_cursor_action(dx, dy, prev_dx, prev_dy, sens):
         if abs(dx) < gesture_state.cursor_movement_threshold:
             dx = 0
@@ -488,7 +489,6 @@ def main():
 
     def gesture_logic_loop():
         global perception_output
-        global cursor_motion
         global render_snapshot
         global profile
 
@@ -580,10 +580,6 @@ def main():
                             gesture_state.prev_angle_vectors[h_index] = curr_vector
                         else:
                             break
-
-                        #with cursor_motion_lock:
-                        #    cursor_motion = get_cursor_action(dx, dy, gesture_state.prev_dxs[h_index], 
-                        #                                      gesture_state.prev_dys[h_index], sens)
                         
                         new_dx, new_dy = get_cursor_action(dx, dy, gesture_state.prev_dxs[h_index], 
                                                    gesture_state.prev_dys[h_index], sens)
@@ -614,24 +610,6 @@ def main():
             if DEBUG:
                 with render_lock:
                     render_snapshot = data.copy()
-
-    # currently not used. considered for a separate thread to control mouse movement.
-    def cursor_motion_loop():
-        global cursor_motion
-
-        dx = 0
-        dy = 0
-
-        while not stop_event.is_set():
-
-            with cursor_motion_lock:
-                if cursor_motion is not None:
-                    dx, dy = cursor_motion[0], cursor_motion[1]
-            
-            if dx != 0 or dy != 0:
-                apply_cursor_action(dx, dy)
-            
-            time.sleep(1/240)
     
     def render_loop():
         global render_snapshot
@@ -674,7 +652,7 @@ def main():
 
     # setup and run threads
     threads = [threading.Thread(target=camera_loop), threading.Thread(target=perception_loop), 
-               threading.Thread(target=gesture_logic_loop), threading.Thread(target=cursor_motion_loop)]
+               threading.Thread(target=gesture_logic_loop)]
 
     # render debug information onto camera frames if debugging
     if DEBUG:

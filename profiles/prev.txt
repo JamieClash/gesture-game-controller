@@ -1,1 +1,1 @@
-profiles\custom_profiles\void collector.json
+profiles\custom_profiles\minecraft.json

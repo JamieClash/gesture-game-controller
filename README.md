@@ -1,7 +1,7 @@
 # Gesture Game Controller
 
 This program adapts from a sample program that recognizes hand gestures with a simple MLP using detected Mediapipe key points.
-(https://github.com/kinivi/hand-gesture-recognition-mediapipe). Some elements from the original program are employed: debugging functions for drawing landmark skeletons and points onto images, the KeyPointClassifier classes (the latter is kept), opencv-mediapipe interactions and a modified version of the original 'app.py' file, renamed to 'coordinate_collection.py' as it is used to record mediapipe keypoint coordinates for collecting additional data for gesture classification.
+(https://github.com/kinivi/hand-gesture-recognition-mediapipe). Some elements from the original program are employed: debugging functions for drawing landmark skeletons and points onto images, the KeyPointClassifier class, opencv-mediapipe interactions and a modified version of the original 'app.py' file, renamed to 'coordinate_collection.py' as it is used to record mediapipe keypoint coordinates for collecting additional data for gesture classification.
 
 # Libraries
 * OpenCV 4.11.0.86
@@ -21,49 +21,96 @@ This program adapts from a sample program that recognizes hand gestures with a s
 # Directory
 <pre>
 │  app.py
+│  coordinate_collection.py
+│  GestureState.py
 │  keypoint_classification.ipynb
-│  point_history_classification.ipynb
-│  
+│  profile_config.py
+│
+└─GUIs
+|   |  mapping_GUI.py
+|   └─ profile_selector_GUI.py
+|
 ├─model
-│  ├─keypoint_classifier
-│  │  │  keypoint.csv
-│  │  │  keypoint_classifier.hdf5
-│  │  │  keypoint_classifier.py
-│  │  │  keypoint_classifier.tflite
-│  │  └─ keypoint_classifier_label.csv
-│  │          
-│  └─point_history_classifier
-│      │  point_history.csv
-│      │  point_history_classifier.hdf5
-│      │  point_history_classifier.py
-│      │  point_history_classifier.tflite
-│      └─ point_history_classifier_label.csv
+│  └─keypoint_classifier
+│     ├─ figures
+│     ├─ hyperparameters
+|     |     └─ best_hp.json
+│     │  keypoint.csv
+│     │  keypoint_classifier.hdf5
+│     │  keypoint_classifier.py
+│     │  keypoint_classifier_full.py
+│     │  keypoint_classifier.tflite
+│     └─ keypoint_classifier_label.csv
 │          
+└─mouse_input
+|   └─ mouse_wrapper.py
+|
+└─preprocessing
+|   |  extract_landmarks.py
+|   |  merge_data.py
+|   |  split_sets.py
+|   └─ write_data.py
+|
+└─profiles
+│   └─ custom_profiles
+│   │     |  default.json
+│   │     │  minecraft.json
+│   │     └─ void_collector.json
+│   └─ prev.txt
+│        
 └─utils
     └─cvfpscalc.py
 
 </pre>
 ### app.py
-This is a sample program for inference.<br>
-In addition, learning data (key points) for hand sign recognition,<br>
-You can also collect training data (index finger coordinate history) for finger gesture recognition.
+The gesture game controller program.
+
+### coordinate_collection.py
+A modified version of the original sample program that is used for collecting mediapipe landmark samples.
+
+### GestureState.py
+GestureState class for storing gesture state information
 
 ### keypoint_classification.ipynb
-This is a model training script for hand sign recognition.
+This is a model training script for gesture recognition.
 
-### point_history_classification.ipynb
-This is a model training script for finger gesture recognition.
+### profile_config.py
+This program allows for gesture mapping profiles to be edited or created. 
+
+### GUIs
+This directory stores scripts for two GUIs related to gesture mapping customisation.
+* mapping_GUI.py
+* profile_selector_GUI.py
 
 ### model/keypoint_classifier
 This directory stores files related to hand sign recognition.<br>
 The following files are stored.
-* Training data(keypoint.csv)
-* Trained model(keypoint_classifier.tflite)
-* Label data(keypoint_classifier_label.csv)
-* Inference module(keypoint_classifier.py)
+* Empty file for manual sample collection (keypoint.csv)
+* Trained tflite model (keypoint_classifier.tflite)
+* Trained full model (keypoint_classifier.hdf5)
+* Gesture labels (keypoint_classifier_label.csv)
+* Inference module (keypoint_classifier.py)
+* Inference module for full model (keypoint_classifier_full.py)
+* hyperparameters folder containing best hyperparameters
+* figures folder containing model testing results
+
+### mouse_input/mouse_wrapper.py
+This file describes the wrapper for Win32's SendInput function for cursor input simulation.
+
+### preprocessing
+This directory stores scripts for processing HaGRIDv2 and self-collected landmark data into target dataset files.
+* extract_landmarks.py
+* merge_data.py
+* split_sets.py
+* write_data.py
+
+### profiles
+This directory stores gesture mapping profiles and prev.txt which lists the most recently used profile.
+* custom_profiles: default.json, minecraft.json, void_collector.json
+* prev.txt
 
 ### utils/cvfpscalc.py
-This is a module for FPS measurement.
+This is a module from the original sample program, used for FPS measurement.
  
 # License 
-hand-gesture-recognition-using-mediapipe is under [Apache v2 license](LICENSE).
+The original sample program is under [Apache v2 license](LICENSE).

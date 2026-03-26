@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# modified from original sample program
+
 import csv
 import json
 import copy
