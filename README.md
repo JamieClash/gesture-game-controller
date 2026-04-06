@@ -1,7 +1,7 @@
 # Gesture Game Controller
 
 This program adapts from a sample program that recognizes hand gestures with a simple MLP using detected Mediapipe key points.
-(https://github.com/kinivi/hand-gesture-recognition-mediapipe). Some elements from the original program are employed: debugging functions for drawing landmark skeletons and points onto images, the KeyPointClassifier class, opencv-mediapipe interactions and a modified version of the original 'app.py' file, renamed to 'coordinate_collection.py' as it is used to record mediapipe keypoint coordinates for collecting additional data for gesture classification.
+(https://github.com/kinivi/hand-gesture-recognition-mediapipe). Some elements from the original program are employed: debugging functions for drawing landmark skeletons and points onto images, the KeyPointClassifier class, opencv-mediapipe interactions and a modified version of the original 'app.py' file, renamed to 'coordinate_collection.py' as it is used to record mediapipe keypoint coordinates for collecting additional data for gesture classification. Please note that due to file size, the dataset used to train the gesture recognition model is NOT included in this repository.
 
 # Libraries
 * OpenCV 4.11.0.86
